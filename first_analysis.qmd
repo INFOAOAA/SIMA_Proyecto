@@ -1,0 +1,22 @@
+---
+title: 'Exploración de los datos'
+author: 'Equipo 6'
+format: pdf
+---
+
+## Lectura de datos
+
+Tomando la muestra del primer año\`
+
+```{python}
+import pandas as pd
+years = [pd.read_csv('BD 202'+str(i)+'.csv') for i in range(0,6)]
+year1 = years[0]
+year1.head()
+```
+
+```{python}
+year1.isna()
+```
+
+\
