@@ -32,6 +32,7 @@ El año 2022 tiene datos NAs menores al 10% lo cual a simple vista podría ser m
 ```{python}
 exp_year = years[2]
 exp_year.head
+exp_year.dtypes
 ```
 
 ### Medidas de tendencias centrales
@@ -49,8 +50,30 @@ medidas_centrales(exp_year)
 
 La variable RAINF es cero en su totalidad, más adelante, haría falta el visualizar si es que esto mismo concuerda con los demás años para saber si esta variable tiene significancia alguna.
 
-Por otro lado, la variable que menos parecen moverse y son bajos, aparte de la RAINF, es el CO, teniendo muy poca dispersión de estas medidas. Esto mismo podría significar un comportammiento normal. ESto es cosa distinta de los compuestos con nitrógeno, pues parecen estar más despegados. Eso podría signifcar que su comportamiento es más volatil que el de CO.
+Por otro lado, la variable que menos parecen moverse y son bajos, aparte de la RAINF, es el CO, teniendo muy poca dispersión de estas medidas. Esto mismo podría significar un comportamiento normal. ESto es cosa distinta de los compuestos con nitrógeno, pues parecen estar más despegados. Eso podría signifcar que su comportamiento es más volatil que el de CO.
 
 Por último, la variable PRS, parece tener el mayor desbalance en diferencia de rango medio, y media y mediana. Al igual que la cantidad presente media de este compuesto a lo largo del 2022 es mucho más alta que las demás.
 
 NOTA: investigar este compuesto o la razón de esta variable
+
+### Matriz de covarianzas
+
+
+
+```{python}
+import numpy as np
+data = exp_year.drop(['Fecha y hora'],axis = 1)
+cols = data.columns[1:data.shape[1]]
+data = data[cols]
+data.to_csv('BD 2022.csv', sep = ';')
+means = np.mean(data, axis = 0)
+means
+```
+
+
+```{python}
+data_center = data-means
+data_center.head
+np.transpose(data_center) @ data_center/data_center.shape[0]
+```
+
