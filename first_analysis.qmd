@@ -16,27 +16,22 @@ import numpy as np
 resultados = []
 
 # Ciclo para procesar los archivos Excel del 2020 al 2025
+
 for anio in range(2020, 2026):
     nombre_excel = f'BD {anio}.xlsx'
     nombre_csv_salida = f'BD_{anio}_Completo.csv'
     
     try:
-        # 1. Leer todas las pestañas del Excel
         diccionario_hojas = pd.read_excel(nombre_excel, sheet_name=None)
         lista_tablas = []
         
-        # 2. Recorrer cada pestaña, agregar la estación y guardarla en la lista
         for nombre_pestana, df_temporal in diccionario_hojas.items():
             df_temporal['Estacion'] = nombre_pestana
             lista_tablas.append(df_temporal)
         
-        # 3. Unir todas las tablas en un solo DataFrame
         df_anio_completo = pd.concat(lista_tablas, ignore_index=True)
-        
-        # 4. Guardar la nueva base de datos combinada
         df_anio_completo.to_csv(nombre_csv_salida, index=False)
         
-        # 5. Calcular los valores nulos para la comparativa
         total_filas = len(df_anio_completo)
         total_nulos = df_anio_completo.isna().sum().sum()
         
@@ -46,65 +41,150 @@ for anio in range(2020, 2026):
             'Valores Nulos': total_nulos,
             'Archivo Generado': nombre_csv_salida
         })
-        print(f"¡Éxito! Archivo guardado: {nombre_csv_salida}")
         
     except FileNotFoundError:
-        print(f"Aviso: El archivo {nombre_excel} no se encontró en la carpeta.")
+        pass 
 
 # Mostrar la tabla comparativa ordenada por cantidad de nulos
 if resultados:
     df_comparativo = pd.DataFrame(resultados)
     print("\n--- Comparativa de Calidad de Datos por Año ---")
     print(df_comparativo.sort_values(by='Valores Nulos'))
-else:
-    print("No se procesaron archivos. Verifica los nombres y la ubicación.")
-
-
 ```
 
 Como podemos observar, el año 2022 es el que tiene la menor cantidad de valores nulos, por lo que se seleccionará este año para la exploración de los datos.
 
-### Medidas de tendencias centrales
+# Comprensión de los datos
+
+Una vez seleccionado el año 2022 por poseer la mejor integridad en sus registros, procedemos a realizar la exploración de su estructura antes de cualquier modificación.
 
 ```{python}
 
-df = pd.read_csv('BD_2022_Completo.csv', sep = ';')
+# Cargar la base de datos consolidada del 2022
+df_2022 = pd.read_csv('BD_2022_Completo.csv')
 
-def medidas_centrales(df: pd.DataFrame):
-    display('Media',df.mean(numeric_only=True, skipna=True),
-    'Mediana',df.median(numeric_only=True,skipna= True))
-    max = df.max(numeric_only=True, skipna=True)
-    min = df.min(numeric_only=True, skipna=True)
-    display('Rango medio',(max-min)/2)
+# a) Dimensión del dataset
+print(f"Dimensión del dataset: {df_2022.shape[0]} registros y {df_2022.shape[1]} columnas.\n")
 
-medidas_centrales(df)
+# b) Información general y tipos de datos
+print("--- Información de las variables ---")
+df_2022.info()
+
+# c) Calidad de los datos: Valores nulos y duplicados
+print("\n--- Porcentaje de Valores Nulos por Variable ---")
+nulos_pct = (df_2022.isna().sum() / len(df_2022)) * 100
+print(nulos_pct.round(2).astype(str) + ' %')
+
+print(f"\nCantidad de registros duplicados: {df_2022.duplicated().sum()}")
 ```
 
-La variable RAINF es cero en su totalidad, más adelante, haría falta el visualizar si es que esto mismo concuerda con los demás años para saber si esta variable tiene significancia alguna.
+## Descripción de las variables involucradas
 
-Por otro lado, la variable que menos parecen moverse y son bajos, aparte de la RAINF, es el CO, teniendo muy poca dispersión de estas medidas. Esto mismo podría significar un comportamiento normal. ESto es cosa distinta de los compuestos con nitrógeno, pues parecen estar más despegados. Eso podría signifcar que su comportamiento es más volatil que el de CO.
+- Fecha y hora: (Temporal/Datetime) Indica el momento exacto de la captura de los datos.
 
-Por último, la variable PRS, parece tener el mayor desbalance en diferencia de rango medio, y media y mediana. Al igual que la cantidad presente media de este compuesto a lo largo del 2022 es mucho más alta que las demás.
+- Estacion: (Categórica) Ubicación del sensor de monitoreo. Variable nominal.
 
-NOTA: investigar este compuesto o la razón de esta variable
+- CO, NO, NO2, NOX, O3, SO2: (Numéricas continuas) Concentración de gases contaminantes en partes por billón/millón.
 
-### Matriz de covarianzas
+- PM10, PM2.5: (Numéricas continuas) Material particulado en suspensión (µg/m³). PM10 será nuestra variable objetivo.
+
+- PRS, RH, SR, TOUT, WSR, WDR: (Numéricas continuas) Variables meteorológicas: Presión (mmHg), Humedad Relativa (%), Radiación Solar (W/m²), Temperatura (°C), Velocidad (km/h) y Dirección del viento.
+
+- RAINF: (Numérica) Precipitación. Se identificó como un valor espurio, ya que consta exclusivamente de valores 0.0 en casi todos sus registros.
+
+## Preparación de los datos
+
 
 ```{python}
-cols = df.columns[1:df.shape[1]]
-df = df[cols]
-df.to_csv('BD 2022.csv', sep = ';')
-means = np.mean(df, axis = 0)
-means
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+
+# ---> AQUÍ ESTÁ LA CORRECCIÓN <---
+# Primero, debemos crear df_prep a partir de df_2022 (y de paso eliminamos duplicados)
+df_prep = df_2022.drop_duplicates().copy()
+
+# Corregir valores espurios: Eliminar variable RAINF por carecer de varianza
+df_prep = df_prep.drop(columns=['RAINF'])
+
+# Tratamiento de Fechas y preparación para imputar
+df_prep['Fecha y hora'] = pd.to_datetime(df_prep['Fecha y hora'])
+df_prep['Mes'] = df_prep['Fecha y hora'].dt.month
+df_prep['Hora'] = df_prep['Fecha y hora'].dt.hour
+
+# Extraemos la fecha temporalmente ya que el imputador no acepta Datetime
+fechas = df_prep['Fecha y hora']
+df_prep = df_prep.drop(columns=['Fecha y hora'])
+
+# Manejo de Datos Categóricos (Variables Dummy)
+df_prep = pd.get_dummies(df_prep, columns=['Estacion'], drop_first=True)
+
+# Imputación de datos faltantes (IterativeImputer)
+print("Iniciando imputación iterativa (esto puede tomar un momento)...")
+imp = IterativeImputer(max_iter=10, random_state=42)
+
+# Guardamos el nombre de las columnas
+columnas = df_prep.columns
+# Aplicamos imputación a TODO el dataset
+df_imputado_array = imp.fit_transform(df_prep)
+
+# Reconstruimos el DataFrame
+df_clean = pd.DataFrame(df_imputado_array, columns=columnas)
+# Reintegramos la columna de Fecha y hora
+df_clean.insert(0, 'Fecha y hora', fechas.values)
+
+print("Imputación finalizada sin nulos restantes")
+```
+
+## Manejo de Valores Atípicos (Outliers)
+
+```{python}
+
+# Variables numéricas a tratar por outliers
+cols_outliers = ['PM10', 'PM2.5', 'O3', 'CO']
+
+for col in cols_outliers:
+    Q1 = df_clean[col].quantile(0.25)
+    Q3 = df_clean[col].quantile(0.75)
+    IQR = Q3 - Q1
+    limite_inf = Q1 - 1.5 * IQR
+    limite_sup = Q3 + 1.5 * IQR
+    
+    # Aplicar Capping (Clipping): limitar los valores a los rangos calculadaos
+    df_clean[col] = np.where(df_clean[col] > limite_sup, limite_sup, df_clean[col])
+    df_clean[col] = np.where(df_clean[col] < limite_inf, limite_inf, df_clean[col])
+
+print("Outliers tratados mediante método de Clipping (IQR).")
+
+```
+
+## Transformación y Reestructuración de Datos
+
+```{python}
+
+from sklearn.preprocessing import StandardScaler
+
+# Discretizar datos (Binning) - Creando categorías de Calidad del Aire para PM10
+bins_pm10 = [0, 50, 100, np.inf]
+etiquetas = ['Buena', 'Regular', 'Mala']
+df_clean['Calidad_Aire_PM10'] = pd.cut(df_clean['PM10'], bins=bins_pm10, labels=etiquetas)
+
+# Escalar y normalizar los datos (StandardScaler)
+cols_numericas = ['CO', 'NO', 'NO2', 'NOX', 'O3', 'PM10', 'PM2.5', 'PRS', 'RH', 'SR', 'TOUT', 'WSR', 'WDR']
+
+scaler = StandardScaler()
+# Creamos copias escaladas para mantener la legibilidad de la base principal si se desea, 
+df_clean[cols_numericas] = scaler.fit_transform(df_clean[cols_numericas])
+
+# Guardado de la base final reestructurada
+df_clean.to_csv('BD_2022_Limpia_Final.csv', index=False)
+print("Base de datos limpia y transformada guardada como 'BD_2022_Limpia_Final.csv'")
+
 ```
 
 ```{python}
-df_center = df-means
-df_center.head
-np.transpose(df_center) @ df_center/df_center.shape[0]
+# Cargar la base de datos limpia y transformada
+df_final = pd.read_csv('BD_2022_Limpia_Final.csv')
+df_final.head()
+df_final.info()
+
 ```
-
-
-
-
-
