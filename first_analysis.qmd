@@ -19,7 +19,7 @@ resultados = []
 
 for anio in range(2020, 2026):
     nombre_excel = f'BD {anio}.xlsx'
-    nombre_csv_salida = f'BD_{anio}_Completo.csv'
+    nombre_csv_salida = f'BD_{anio}_Unido.csv'
     
     try:
         diccionario_hojas = pd.read_excel(nombre_excel, sheet_name=None)
@@ -61,7 +61,7 @@ Una vez seleccionado el año 2022 por poseer la mejor integridad en sus registro
 ```{python}
 
 # Cargar la base de datos consolidada del 2022
-df_2022 = pd.read_csv('BD_2022_Completo.csv')
+df_2022 = pd.read_csv('BD_2022_Unido.csv')
 
 # a) Dimensión del dataset
 print(f"Dimensión del dataset: {df_2022.shape[0]} registros y {df_2022.shape[1]} columnas.\n")
@@ -98,11 +98,10 @@ print(f"\nCantidad de registros duplicados: {df_2022.duplicated().sum()}")
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 
-# ---> AQUÍ ESTÁ LA CORRECCIÓN <---
-# Primero, debemos crear df_prep a partir de df_2022 (y de paso eliminamos duplicados)
+# Primero, debemos crear df_prep a partir de df_2022
 df_prep = df_2022.drop_duplicates().copy()
 
-# Corregir valores espurios: Eliminar variable RAINF por carecer de varianza
+# Eliminar variable RAINF por carecer de varianza
 df_prep = df_prep.drop(columns=['RAINF'])
 
 # Tratamiento de Fechas y preparación para imputar
@@ -123,11 +122,13 @@ imp = IterativeImputer(max_iter=10, random_state=42)
 
 # Guardamos el nombre de las columnas
 columnas = df_prep.columns
+
 # Aplicamos imputación a TODO el dataset
 df_imputado_array = imp.fit_transform(df_prep)
 
 # Reconstruimos el DataFrame
 df_clean = pd.DataFrame(df_imputado_array, columns=columnas)
+
 # Reintegramos la columna de Fecha y hora
 df_clean.insert(0, 'Fecha y hora', fechas.values)
 
@@ -137,6 +138,7 @@ print("Imputación finalizada sin nulos restantes")
 ## Manejo de Valores Atípicos (Outliers)
 
 ```{python}
+
 cols_outliers = ['PM10', 'PM2.5', 'O3', 'CO']
 
 for col in cols_outliers:
@@ -173,14 +175,14 @@ scaler = StandardScaler()
 df_clean[cols_numericas] = scaler.fit_transform(df_clean[cols_numericas])
 
 # Guardado de la base final reestructurada
-df_clean.to_csv('BD_2022_Limpia_Final.csv', index=False)
-print("Base de datos limpia y transformada guardada como 'BD_2022_Limpia_Final.csv'")
+df_clean.to_csv('BD_2022_Limpia.csv', index=False)
+print("Base de datos limpia y transformada guardada como 'BD_2022_Limpia.csv'")
 
 ```
 
 ```{python}
 # Cargar la base de datos limpia y transformada
-df_final = pd.read_csv('BD_2022_Limpia_Final.csv')
+df_final = pd.read_csv('BD_2022_Limpia.csv')
 df_final.head()
 df_final.info()
 ```
@@ -192,7 +194,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-exp_year = pd.read_csv('BD_2022_Limpia_Final.csv')
+exp_year = pd.read_csv('BD_2022_Limpia.csv')
 data = exp_year
 data = data[cols_numericas]
 means = np.mean(data, axis = 0)

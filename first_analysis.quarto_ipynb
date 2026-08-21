@@ -1,0 +1,308 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "---\n",
+        "title: 'PARTE 2. COMPRENSIÓN Y PREPARACIÓN DE LOS DATOS'\n",
+        "author: 'Equipo 6'\n",
+        "format: pdf\n",
+        "---\n",
+        "\n",
+        "### Importación y estructuración de los datos\n",
+        "\n",
+        "Antes de iniciar con la exploración de los datos, es necesario importar y estructurar los datos de los archivos Excel que contienen la información de cada año, ya que se encontró que los archivos contienen varias hojas y que la cantidad de valores nulos varía entre los años. Por lo tanto, se concatenarán las hojas de cada año y se agregará una columna indicativa a la estación de la observacióm, después se realizará un análisis comparativo de los valores nulos por año para determinar cuál año tiene la menor cantidad de datos faltantes y, por ende, será el año seleccionado para la exploración de los datos."
+      ],
+      "id": "10bc5ae9"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "\n",
+        "# Lista para guardar el resumen de calidad de cada año\n",
+        "resultados = []\n",
+        "\n",
+        "# Ciclo para procesar los archivos Excel del 2020 al 2025\n",
+        "\n",
+        "for anio in range(2020, 2026):\n",
+        "    nombre_excel = f'BD {anio}.xlsx'\n",
+        "    nombre_csv_salida = f'BD_{anio}_Unido.csv'\n",
+        "    \n",
+        "    try:\n",
+        "        diccionario_hojas = pd.read_excel(nombre_excel, sheet_name=None)\n",
+        "        lista_tablas = []\n",
+        "        \n",
+        "        for nombre_pestana, df_temporal in diccionario_hojas.items():\n",
+        "            df_temporal['Estacion'] = nombre_pestana\n",
+        "            lista_tablas.append(df_temporal)\n",
+        "        \n",
+        "        df_anio_completo = pd.concat(lista_tablas, ignore_index=True)\n",
+        "        df_anio_completo.to_csv(nombre_csv_salida, index=False)\n",
+        "        \n",
+        "        total_filas = len(df_anio_completo)\n",
+        "        total_nulos = df_anio_completo.isna().sum().sum()\n",
+        "        \n",
+        "        resultados.append({\n",
+        "            'Año': anio,\n",
+        "            'Total Filas': total_filas,\n",
+        "            'Valores Nulos': total_nulos,\n",
+        "            'Archivo Generado': nombre_csv_salida\n",
+        "        })\n",
+        "        \n",
+        "    except FileNotFoundError:\n",
+        "        pass \n",
+        "\n",
+        "# Mostrar la tabla comparativa ordenada por cantidad de nulos\n",
+        "if resultados:\n",
+        "    df_comparativo = pd.DataFrame(resultados)\n",
+        "    print(\"\\n--- Comparativa de Calidad de Datos por Año ---\")\n",
+        "    print(df_comparativo.sort_values(by='Valores Nulos'))"
+      ],
+      "id": "f26cc895",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Como podemos observar, el año 2022 es el que tiene la menor cantidad de valores nulos, por lo que se seleccionará este año para la exploración de los datos.\n",
+        "\n",
+        "# Comprensión de los datos\n",
+        "\n",
+        "Una vez seleccionado el año 2022 por poseer la mejor integridad en sus registros, procedemos a realizar la exploración de su estructura antes de cualquier modificación."
+      ],
+      "id": "e9b20d53"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# Cargar la base de datos consolidada del 2022\n",
+        "df_2022 = pd.read_csv('BD_2022_Unido.csv')\n",
+        "\n",
+        "# a) Dimensión del dataset\n",
+        "print(f\"Dimensión del dataset: {df_2022.shape[0]} registros y {df_2022.shape[1]} columnas.\\n\")\n",
+        "\n",
+        "# b) Información general y tipos de datos\n",
+        "print(\"--- Información de las variables ---\")\n",
+        "df_2022.info()\n",
+        "\n",
+        "# c) Calidad de los datos: Valores nulos y duplicados\n",
+        "print(\"\\n--- Porcentaje de Valores Nulos por Variable ---\")\n",
+        "nulos_pct = (df_2022.isna().sum() / len(df_2022)) * 100\n",
+        "print(nulos_pct.round(2).astype(str) + ' %')\n",
+        "\n",
+        "print(f\"\\nCantidad de registros duplicados: {df_2022.duplicated().sum()}\")"
+      ],
+      "id": "02d6744f",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Descripción de las variables involucradas\n",
+        "\n",
+        "- Fecha y hora: (Temporal/Datetime) Indica el momento exacto de la captura de los datos.\n",
+        "\n",
+        "- Estacion: (Categórica) Ubicación del sensor de monitoreo. Variable nominal.\n",
+        "\n",
+        "- CO, NO, NO2, NOX, O3, SO2: (Numéricas continuas) Concentración de gases contaminantes en partes por billón/millón.\n",
+        "\n",
+        "- PM10, PM2.5: (Numéricas continuas) Material particulado en suspensión (µg/m³). PM10 será nuestra variable objetivo.\n",
+        "\n",
+        "- PRS, RH, SR, TOUT, WSR, WDR: (Numéricas continuas) Variables meteorológicas: Presión (mmHg), Humedad Relativa (%), Radiación Solar (W/m²), Temperatura (°C), Velocidad (km/h) y Dirección del viento.\n",
+        "\n",
+        "- RAINF: (Numérica) Precipitación. Se identificó como un valor espurio, ya que consta exclusivamente de valores 0.0 en casi todos sus registros.\n",
+        "\n",
+        "## Preparación de los datos"
+      ],
+      "id": "0607380f"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "from sklearn.experimental import enable_iterative_imputer\n",
+        "from sklearn.impute import IterativeImputer\n",
+        "\n",
+        "# Primero, debemos crear df_prep a partir de df_2022\n",
+        "df_prep = df_2022.drop_duplicates().copy()\n",
+        "\n",
+        "# Eliminar variable RAINF por carecer de varianza\n",
+        "df_prep = df_prep.drop(columns=['RAINF'])\n",
+        "\n",
+        "# Tratamiento de Fechas y preparación para imputar\n",
+        "df_prep['Fecha y hora'] = pd.to_datetime(df_prep['Fecha y hora'])\n",
+        "df_prep['Mes'] = df_prep['Fecha y hora'].dt.month\n",
+        "df_prep['Hora'] = df_prep['Fecha y hora'].dt.hour\n",
+        "\n",
+        "# Extraemos la fecha temporalmente ya que el imputador no acepta Datetime\n",
+        "fechas = df_prep['Fecha y hora']\n",
+        "df_prep = df_prep.drop(columns=['Fecha y hora'])\n",
+        "\n",
+        "# Manejo de Datos Categóricos (Variables Dummy)\n",
+        "df_prep = pd.get_dummies(df_prep, columns=['Estacion'], drop_first=True)\n",
+        "\n",
+        "# Imputación de datos faltantes (IterativeImputer)\n",
+        "print(\"Iniciando imputación iterativa (esto puede tomar un momento)...\")\n",
+        "imp = IterativeImputer(max_iter=10, random_state=42)\n",
+        "\n",
+        "# Guardamos el nombre de las columnas\n",
+        "columnas = df_prep.columns\n",
+        "\n",
+        "# Aplicamos imputación a TODO el dataset\n",
+        "df_imputado_array = imp.fit_transform(df_prep)\n",
+        "\n",
+        "# Reconstruimos el DataFrame\n",
+        "df_clean = pd.DataFrame(df_imputado_array, columns=columnas)\n",
+        "\n",
+        "# Reintegramos la columna de Fecha y hora\n",
+        "df_clean.insert(0, 'Fecha y hora', fechas.values)\n",
+        "\n",
+        "print(\"Imputación finalizada sin nulos restantes\")"
+      ],
+      "id": "38edbb49",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Manejo de Valores Atípicos (Outliers)"
+      ],
+      "id": "20f02e27"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "cols_outliers = ['PM10', 'PM2.5', 'O3', 'CO']\n",
+        "\n",
+        "for col in cols_outliers:\n",
+        "    Q1 = df_clean[col].quantile(0.25)\n",
+        "    Q3 = df_clean[col].quantile(0.75)\n",
+        "    IQR = Q3 - Q1\n",
+        "    limite_inf = Q1 - 1.5 * IQR\n",
+        "    limite_sup = Q3 + 1.5 * IQR\n",
+        "    \n",
+        "    # Aplicar Capping (Clipping): limitar los valores a los rangos calculadaos\n",
+        "    df_clean[col] = np.where(df_clean[col] > limite_sup, limite_sup, df_clean[col])\n",
+        "    df_clean[col] = np.where(df_clean[col] < limite_inf, limite_inf, df_clean[col])\n",
+        "\n",
+        "print(\"Outliers tratados mediante método de Clipping (IQR).\")"
+      ],
+      "id": "84134ba6",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Transformación y Reestructuración de Datos"
+      ],
+      "id": "00aba8f9"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "from sklearn.preprocessing import StandardScaler\n",
+        "\n",
+        "# Discretizar datos (Binning) - Creando categorías de Calidad del Aire para PM10\n",
+        "bins_pm10 = [0, 50, 100, np.inf]\n",
+        "etiquetas = ['Buena', 'Regular', 'Mala']\n",
+        "df_clean['Calidad_Aire_PM10'] = pd.cut(df_clean['PM10'], bins=bins_pm10, labels=etiquetas)\n",
+        "\n",
+        "# Escalar y normalizar los datos (StandardScaler)\n",
+        "cols_numericas = ['CO', 'NO', 'NO2', 'NOX', 'O3', 'PM10', 'PM2.5', 'PRS', 'RH', 'SR', 'TOUT', 'WSR', 'WDR']\n",
+        "\n",
+        "scaler = StandardScaler()\n",
+        "# Creamos copias escaladas para mantener la legibilidad de la base principal si se desea, \n",
+        "df_clean[cols_numericas] = scaler.fit_transform(df_clean[cols_numericas])\n",
+        "\n",
+        "# Guardado de la base final reestructurada\n",
+        "df_clean.to_csv('BD_2022_Limpia.csv', index=False)\n",
+        "print(\"Base de datos limpia y transformada guardada como 'BD_2022_Limpia.csv'\")"
+      ],
+      "id": "a14a05f8",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# Cargar la base de datos limpia y transformada\n",
+        "df_final = pd.read_csv('BD_2022_Limpia.csv')\n",
+        "df_final.head()\n",
+        "df_final.info()"
+      ],
+      "id": "ae5d5f72",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Mapa de correlación"
+      ],
+      "id": "6b177781"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "exp_year = pd.read_csv('BD_2022_Limpia.csv')\n",
+        "data = exp_year\n",
+        "data = data[cols_numericas]\n",
+        "means = np.mean(data, axis = 0)\n",
+        "\n",
+        "data_center = data-means\n",
+        "data_center.head\n",
+        "display(np.transpose(data_center) @ data_center/data_center.shape[0])\n",
+        "\n",
+        "import seaborn as sns\n",
+        "\n",
+        "r=data.corr()\n",
+        "sns.heatmap(\n",
+        "    r,\n",
+        "    annot=True,  # Write the data values in the cells\n",
+        "    fmt=\".2f\",  # Format numbers to 2 decimal places\n",
+        "    cmap=\"coolwarm\",  # Color map scheme\n",
+        "    vmin=-1,\n",
+        "    vmax=1,  # Set colorbar limits (useful for correlations)\n",
+        "    linewidths=0.5,  # Add subtle borders between cells\n",
+        "    cbar=True,  # Show colorbar legend\n",
+        ")\n",
+        "plt.show()"
+      ],
+      "id": "2f653413",
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "name": "python3",
+      "language": "python",
+      "display_name": "Python 3 (ipykernel)",
+      "path": "C:\\Users\\cocob\\AppData\\Local\\Programs\\Python\\Python313\\share\\jupyter\\kernels\\python3"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}
