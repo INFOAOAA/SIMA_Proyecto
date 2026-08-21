@@ -1,43 +1,75 @@
 ---
-title: 'Exploración de los datos'
+title: 'PARTE 2. COMPRENSIÓN Y PREPARACIÓN DE LOS DATOS'
 author: 'Equipo 6'
 format: pdf
 ---
 
-## Lectura de datos
+### Importación y estructuración de los datos
 
-Tomando la muestra del primer año
+Antes de iniciar con la exploración de los datos, es necesario importar y estructurar los datos de los archivos Excel que contienen la información de cada año, ya que se encontró que los archivos contienen varias hojas y que la cantidad de valores nulos varía entre los años. Por lo tanto, se concatenarán las hojas de cada año y se agregará una columna indicativa a la estación de la observacióm, después se realizará un análisis comparativo de los valores nulos por año para determinar cuál año tiene la menor cantidad de datos faltantes y, por ende, será el año seleccionado para la exploración de los datos.
 
 ```{python}
 import pandas as pd
-years = [pd.read_csv('BD 202'+str(i)+'.csv', sep = ';') for i in range(0,6)]
-year1 = years[0]
-year1.head()
+import numpy as np
+
+# Lista para guardar el resumen de calidad de cada año
+resultados = []
+
+# Ciclo para procesar los archivos Excel del 2020 al 2025
+for anio in range(2020, 2026):
+    nombre_excel = f'BD {anio}.xlsx'
+    nombre_csv_salida = f'BD_{anio}_Completo.csv'
+    
+    try:
+        # 1. Leer todas las pestañas del Excel
+        diccionario_hojas = pd.read_excel(nombre_excel, sheet_name=None)
+        lista_tablas = []
+        
+        # 2. Recorrer cada pestaña, agregar la estación y guardarla en la lista
+        for nombre_pestana, df_temporal in diccionario_hojas.items():
+            df_temporal['Estacion'] = nombre_pestana
+            lista_tablas.append(df_temporal)
+        
+        # 3. Unir todas las tablas en un solo DataFrame
+        df_anio_completo = pd.concat(lista_tablas, ignore_index=True)
+        
+        # 4. Guardar la nueva base de datos combinada
+        df_anio_completo.to_csv(nombre_csv_salida, index=False)
+        
+        # 5. Calcular los valores nulos para la comparativa
+        total_filas = len(df_anio_completo)
+        total_nulos = df_anio_completo.isna().sum().sum()
+        
+        resultados.append({
+            'Año': anio,
+            'Total Filas': total_filas,
+            'Valores Nulos': total_nulos,
+            'Archivo Generado': nombre_csv_salida
+        })
+        print(f"¡Éxito! Archivo guardado: {nombre_csv_salida}")
+        
+    except FileNotFoundError:
+        print(f"Aviso: El archivo {nombre_excel} no se encontró en la carpeta.")
+
+# Mostrar la tabla comparativa ordenada por cantidad de nulos
+if resultados:
+    df_comparativo = pd.DataFrame(resultados)
+    print("\n--- Comparativa de Calidad de Datos por Año ---")
+    print(df_comparativo.sort_values(by='Valores Nulos'))
+else:
+    print("No se procesaron archivos. Verifica los nombres y la ubicación.")
+
+
 ```
 
-```{python}
-year1.isna().sum()
-```
-
-El año uno tiene muchos datos nulos, por lo que aunque fuera a tomarse como una muestra exploratoria, faltarían datos para poder entender el comportamiento de la población entera en la que se encuentra esta muestra
-
-Para visualizar los valores nulos de cada uno:
-
-```{python}
-[print(f'{name+2020} : {year.isna().sum()/year.shape[0]} \n') for name,year in enumerate(years)]
-```
-
-El año 2022 tiene datos NAs menores al 10% lo cual a simple vista podría ser menor a todos los demás años. Es por ello, que la muestra será el año 2022
-
-```{python}
-exp_year = years[2]
-exp_year.head
-exp_year.dtypes
-```
+Como podemos observar, el año 2022 es el que tiene la menor cantidad de valores nulos, por lo que se seleccionará este año para la exploración de los datos.
 
 ### Medidas de tendencias centrales
 
 ```{python}
+
+df = pd.read_csv('BD_2022_Completo.csv', sep = ';')
+
 def medidas_centrales(df: pd.DataFrame):
     display('Media',df.mean(numeric_only=True, skipna=True),
     'Mediana',df.median(numeric_only=True,skipna= True))
@@ -45,7 +77,7 @@ def medidas_centrales(df: pd.DataFrame):
     min = df.min(numeric_only=True, skipna=True)
     display('Rango medio',(max-min)/2)
 
-medidas_centrales(exp_year)
+medidas_centrales(df)
 ```
 
 La variable RAINF es cero en su totalidad, más adelante, haría falta el visualizar si es que esto mismo concuerda con los demás años para saber si esta variable tiene significancia alguna.
@@ -58,22 +90,21 @@ NOTA: investigar este compuesto o la razón de esta variable
 
 ### Matriz de covarianzas
 
-
-
 ```{python}
-import numpy as np
-data = exp_year.drop(['Fecha y hora'],axis = 1)
-cols = data.columns[1:data.shape[1]]
-data = data[cols]
-data.to_csv('BD 2022.csv', sep = ';')
-means = np.mean(data, axis = 0)
+cols = df.columns[1:df.shape[1]]
+df = df[cols]
+df.to_csv('BD 2022.csv', sep = ';')
+means = np.mean(df, axis = 0)
 means
 ```
 
-
 ```{python}
-data_center = data-means
-data_center.head
-np.transpose(data_center) @ data_center/data_center.shape[0]
+df_center = df-means
+df_center.head
+np.transpose(df_center) @ df_center/df_center.shape[0]
 ```
+
+
+
+
 
