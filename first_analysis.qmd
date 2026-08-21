@@ -94,7 +94,6 @@ print(f"\nCantidad de registros duplicados: {df_2022.duplicated().sum()}")
 
 ## Preparación de los datos
 
-
 ```{python}
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
@@ -138,8 +137,6 @@ print("Imputación finalizada sin nulos restantes")
 ## Manejo de Valores Atípicos (Outliers)
 
 ```{python}
-
-# Variables numéricas a tratar por outliers
 cols_outliers = ['PM10', 'PM2.5', 'O3', 'CO']
 
 for col in cols_outliers:
@@ -186,5 +183,36 @@ print("Base de datos limpia y transformada guardada como 'BD_2022_Limpia_Final.c
 df_final = pd.read_csv('BD_2022_Limpia_Final.csv')
 df_final.head()
 df_final.info()
+```
 
+## Mapa de correlación
+
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+exp_year = pd.read_csv('BD_2022_Limpia_Final.csv')
+data = exp_year
+data = data[cols_numericas]
+means = np.mean(data, axis = 0)
+
+data_center = data-means
+data_center.head
+display(np.transpose(data_center) @ data_center/data_center.shape[0])
+
+import seaborn as sns
+
+r=data.corr()
+sns.heatmap(
+    r,
+    annot=True,  # Write the data values in the cells
+    fmt=".2f",  # Format numbers to 2 decimal places
+    cmap="coolwarm",  # Color map scheme
+    vmin=-1,
+    vmax=1,  # Set colorbar limits (useful for correlations)
+    linewidths=0.5,  # Add subtle borders between cells
+    cbar=True,  # Show colorbar legend
+)
+plt.show()
 ```

@@ -1,0 +1,45 @@
+---
+title: 'Análisis postimputación'
+author: 'Equipo 6'
+format: pdf
+---
+
+Después de usar la librería de imputación scikit-learn es posible crear las matrices de varianzas y covarianzas
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+exp_year = pd.read_csv('BD_2022_test_imputed.csv')
+data = exp_year
+cols = data.columns[1:data.shape[1]]
+display(cols)
+data = data[cols]
+means = np.mean(data, axis = 0)
+
+data_center = data-means
+data_center.head
+display(np.transpose(data_center) @ data_center/data_center.shape[0])
+
+import seaborn as sns
+
+r=data.corr()
+sns.heatmap(
+    r,
+    annot=True,  # Write the data values in the cells
+    fmt=".2f",  # Format numbers to 2 decimal places
+    cmap="coolwarm",  # Color map scheme
+    vmin=-1,
+    vmax=1,  # Set colorbar limits (useful for correlations)
+    linewidths=0.5,  # Add subtle borders between cells
+    cbar=True,  # Show colorbar legend
+)
+plt.show()
+```
+
+
+
+```{python}
+
+```
+
