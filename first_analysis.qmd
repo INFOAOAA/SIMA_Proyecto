@@ -11,6 +11,7 @@ Antes de iniciar con la exploración de los datos, es necesario importar y estru
 ```{python}
 import pandas as pd
 import numpy as np
+import os
 
 # Lista para guardar el resumen de calidad de cada año
 resultados = []
@@ -18,9 +19,9 @@ resultados = []
 # Ciclo para procesar los archivos Excel del 2020 al 2025
 
 for anio in range(2020, 2026):
-    nombre_excel = f'BD {anio}.xlsx'
-    nombre_csv_salida = f'BD_{anio}_Unido.csv'
-    
+    nombre_excel = os.path.abspath(f'BasesDeDatosXlsx/BD {anio}.xlsxs')
+    nombre_csv_salida = os.path.abspath(f'BasesDeDatosCsv/BD_{anio}_Unido.csv')
+
     try:
         diccionario_hojas = pd.read_excel(nombre_excel, sheet_name=None)
         lista_tablas = []
@@ -61,7 +62,8 @@ Una vez seleccionado el año 2022 por poseer la mejor integridad en sus registro
 ```{python}
 
 # Cargar la base de datos consolidada del 2022
-df_2022 = pd.read_csv('BD_2022_Unido.csv')
+path = os.path.abspath('BasesDeDatosCsv/BD_2022_Unido.csv')
+df_2022 = pd.read_csv(path)
 
 # a) Dimensión del dataset
 print(f"Dimensión del dataset: {df_2022.shape[0]} registros y {df_2022.shape[1]} columnas.\n")
@@ -167,6 +169,7 @@ bins_pm10 = [0, 50, 100, np.inf]
 etiquetas = ['Buena', 'Regular', 'Mala']
 df_clean['Calidad_Aire_PM10'] = pd.cut(df_clean['PM10'], bins=bins_pm10, labels=etiquetas)
 
+
 # Escalar y normalizar los datos (StandardScaler)
 cols_numericas = ['CO', 'NO', 'NO2', 'NOX', 'O3', 'PM10', 'PM2.5', 'PRS', 'RH', 'SR', 'TOUT', 'WSR', 'WDR']
 
@@ -175,14 +178,15 @@ scaler = StandardScaler()
 df_clean[cols_numericas] = scaler.fit_transform(df_clean[cols_numericas])
 
 # Guardado de la base final reestructurada
-df_clean.to_csv('BD_2022_Limpia.csv', index=False)
+path = os.path.abspath('BasesDeDatosCsv/Limpia/BD_2022_Limpia.csv')
+df_clean.to_csv(path, index=False)
 print("Base de datos limpia y transformada guardada como 'BD_2022_Limpia.csv'")
 
 ```
 
 ```{python}
-# Cargar la base de datos limpia y transformada
-df_final = pd.read_csv('BD_2022_Limpia.csv')
+os.path.abspath('BasesDeDatosCsv/Limpia/BD_2022_Limpia.csv')
+df_final = pd.read_csv(path)
 df_final.head()
 df_final.info()
 ```
@@ -194,7 +198,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-exp_year = pd.read_csv('BD_2022_Limpia.csv')
+
+import os
+
+exp_year = pd.read_csv('BasesDeDatosCsv/Limpia/BD_2022_Limpia.csv')
 data = exp_year
 data = data[cols_numericas]
 means = np.mean(data, axis = 0)
@@ -217,4 +224,9 @@ sns.heatmap(
     cbar=True,  # Show colorbar legend
 )
 plt.show()
+```
+
+
+```{python}
+
 ```
