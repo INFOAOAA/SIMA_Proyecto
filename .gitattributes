@@ -1,0 +1,2 @@
+BasesDeDatosCsv/BD_Completa.csv filter=lfs diff=lfs merge=lfs -text
+BasesDeDatosCsv/Limpia/BD_Completa.csv filter=lfs diff=lfs merge=lfs -text

@@ -168,6 +168,8 @@ from sklearn.preprocessing import StandardScaler
 bins_pm10 = [0, 50, 100, np.inf]
 etiquetas = ['Buena', 'Regular', 'Mala']
 df_clean['Calidad_Aire_PM10'] = pd.cut(df_clean['PM10'], bins=bins_pm10, labels=etiquetas)
+df_clean['Fecha y hora'] = pd.to_datetime(df_clean['Fecha y hora'], yearfirst=True)
+bins_seasons = ['']
 
 
 # Escalar y normalizar los datos (StandardScaler)
