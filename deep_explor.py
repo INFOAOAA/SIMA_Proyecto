@@ -8,6 +8,7 @@ import os
 import plotly.figure_factory as ff
 import matplotlib.pyplot as plt
 from plotly.subplots import make_subplots
+from scipy.stats import f_oneway
 
 
 def standard_measurements(df: pd.DataFrame):
@@ -54,14 +55,19 @@ def pie_chart(df: pd.DataFrame):
     ax.legend(wedges, counts.index, title="Calidad del aire", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
     plt.show()
 
-# def anova_by_stations(df: pd.DataFrame):
+def residual_graph(df: pd.DataFrame):
+    fig = make_subplots()
+
+def anova_by_stations(df: pd.DataFrame):
+    f_statistic, p_value = f_oneway()
 
 def visualize_options(data: pd.DataFrame):
     print('''
     Visualizar:
     1. Pie chart (Calidad de aire)
     2. Medidas estándar
-    3. Distribution_graph
+    3. Gráfica de distribución
+    4. Anova por estación
     q) quit
     ''')
     opt = input().strip()
@@ -77,6 +83,8 @@ def visualize_options(data: pd.DataFrame):
         case '3':
             distribution_graph(nums)
             visualize_options(data=data)
+        case '4':
+            anova_by_stations(nums)
         case 'q':
             pass
         case _: 
@@ -84,7 +92,7 @@ def visualize_options(data: pd.DataFrame):
 
         
 def main():
-    path = os.path.abspath('BasesDeDatosParquet/BD_Completa.parquet')
+    path = os.path.abspath('BasesDeDatosParquet/BD_no_imputation.parquet')
     data = pd.read_parquet(path=path)
     visualize_options(data=data)
     #standard_measurements(data)    

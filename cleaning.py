@@ -73,13 +73,20 @@ def clean_database():
         "WDR",
     ]
     scaler = StandardScaler()
+
+    os.makedirs("BasesDeDatosParquet", exist_ok=True)
+
+    path4 = os.path.abspath('BasesDeDatosParquet/BD_no_standarization.parquet')
+    df_raw.to_parquet(path4, engine='pyarrow', index=False)
+
     df_raw[cols_numericas] = scaler.fit_transform(df_raw[cols_numericas])
 
     # Ensure output directory exists
-    os.makedirs("BasesDeDatosParquet", exist_ok=True)
+
     path1 = os.path.abspath("BasesDeDatosParquet/BD_Completa.parquet")
     path2 = os.path.abspath("BasesDeDatosParquet/BD_no_dummies.parquet")
     path3 = os.path.abspath("BasesDeDatosParquet/BD_no_imputation.parquet")
+    
 
     # -------------------------------------------------------------------------
     # PATH 3: Scaled, NO Imputation, NO 'Estacion' Dummies
