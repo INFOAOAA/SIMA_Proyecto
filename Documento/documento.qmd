@@ -1,0 +1,469 @@
+---
+titulo: "Actividad 1.7"
+subtitulo: "Componentes principales"
+autor: "Angel Ruben Galindo Alvarez"
+matricula: "A00228356"
+curso: "MA2003B Análisis Multivariado"
+profesor: "Blanca Rosa Ruiz Hernández y Raúl Gómez Muñoz"
+campus: "Campus Monterrey"
+fecha: "\\today"
+
+format:
+  pdf:
+    documentclass: article
+    fontsize: 11pt
+    papersize: letter
+    geometry:
+      - top=3cm
+      - bottom=3cm
+      - left=2.5cm
+      - right=2.5cm
+    cite-method: biblatex
+    bibliography: referencias.bib
+    biblatexoptions:
+      - style=apa
+    include-in-header:
+      - text: |
+          \newcommand{\titulo}{Actividad 1.7}
+          \newcommand{\subtitulo}{Componentes principales}
+          \newcommand{\autor}{Angel Ruben Galindo Alvarez}
+          \newcommand{\matricula}{A00228356}
+          \newcommand{\curso}{MA2003B Análisis Multivariado}
+          \newcommand{\profesor}{Blanca Rosa Ruiz Hernández \\ Raúl Gómez Muñoz}
+          \newcommand{\campus}{Campus Monterrey}
+          \newcommand{\fecha}{\today}
+      - preamble.tex
+    include-before-body: titlepage.tex
+---
+
+A partir de los datos sobre indicadores económicos y sociales de 96 países (paises_mundo.csv)  hacer una análisis de Componentes principales con la  matriz de varianzas-covarianzas y la matriz de correlaciones. Compara los resultados y argumenta cuál es mejor según los resultados obtenidos.
+
+# Parte I: Valores y Vectores Propios
+
+Primero, cargamos los datos y calculamos las matrices de covarianza (S) y correlación (R).
+
+```{r}
+#| warning: false
+X <- read.csv("paises_mundo.csv")
+str(X)
+# Matriz de varianzas-covarianzas
+S <- cov(X)
+# Valores y vectores propios de S
+eigen_S <- eigen(S)
+# Matriz de correlaciones
+R <- cor(X)
+# Valores y vectores propios de R
+eigen_R <- eigen(R)
+# Proporción de varianza explicada
+var_explicada_S <- eigen_S$values / sum(eigen_S$values)
+var_explicada_R <- eigen_R$values / sum(eigen_R$values)
+# Varianza acumulada
+var_acumulada_S <- cumsum(var_explicada_S)
+var_acumulada_R <- cumsum(var_explicada_R)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+# Tabla completa de valores propios y varianza explicada
+tabla_eigen <- data.frame(
+  Componente = paste0("CP", 1:ncol(X)),
+  Eigenvalue_S = eigen_S$values,
+  Varianza_S = var_explicada_S * 100,
+  Acumulada_S = var_acumulada_S * 100,
+  Eigenvalue_R = eigen_R$values,
+  Varianza_R = var_explicada_R * 100,
+  Acumulada_R = var_acumulada_R * 100
+)
+
+knitr::kable(
+  tabla_eigen,
+  digits = 4,
+  caption = "Valores propios y varianza explicada de las matrices S y R"
+)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+# Vectores propios de las dos primeras componentes - Matriz S
+vectores_S <- data.frame(
+  Variable = colnames(X),
+  CP1 = eigen_S$vectors[, 1],
+  CP2 = eigen_S$vectors[, 2]
+)
+knitr::kable(
+  vectores_S,
+  digits = 5,
+  caption = "Vectores propios de CP1 y CP2 - Matriz de covarianzas S"
+)
+```
+
+```{r}
+# Vectores propios de las dos primeras componentes matriz R
+vectores_R <- data.frame(
+  Variable = colnames(X),
+  CP1 = eigen_R$vectors[, 1],
+  CP2 = eigen_R$vectors[, 2]
+)
+knitr::kable(
+  vectores_R,
+  digits = 5,
+  caption = "Vectores propios de CP1 y CP2 - Matriz de correlaciones R"
+)
+```
+
+## Análisis de la varianza explicada
+
+En la matriz de varianzas-covarianzas, la primera componente principal concentra aproximadamente el 90.35 % de la variabilidad total, mientras que la segunda explica aproximadamente el 9.65 %. En conjunto, las dos primeras componentes representan prácticamente el 100 % de la variabilidad de los datos. Esto indica que es posible reducir la dimensión del problema utilizando únicamente las dos primeras componentes.
+
+Sin embargo, este resultado debe interpretarse con precaución, debido a que las variables originales están medidas en escalas y unidades muy diferentes. Por esta razón, las variables con mayor magnitud numérica tienen una influencia mucho mayor sobre la matriz de covarianzas y, en consecuencia, sobre sus componentes principales.
+
+En la matriz de correlaciones la primera componente explica aproximadamente el 36.64 % de la varianza y la segunda el 17.55 %, acumulando aproximadamente el 54.18 % entre ambas. A diferencia del análisis con la matriz de covarianzas, la variabilidad queda distribuida entre un mayor número de componentes.
+
+En consecuencia, aunque la matriz S concentra un mayor porcentaje de varianza en sus primeras componentes, este resultado está fuertemente influenciado por las diferencias de escala entre las variables. Para comparar de manera equilibrada los indicadores económicos, sociales, ambientales y de infraestructura, resulta más apropiado considerar el análisis basado en la matriz de correlaciones.
+
+
+## Ecuaciones de las componentes principales
+
+```{r}
+Z <- scale(X)
+head(Z)
+```
+
+### Combinaciones lineales con la matriz de correlaciones
+
+Definiendo las variables estandarizadas como
+
+$$
+Z_i = \frac{X_i \text{-} \overline X_i}{s_i}
+$$
+
+las dos primeras componentes principales obtenidas a partir de la matriz de correlaciones se expresan como:
+
+$$
+\begin{aligned}
+CP_1 ={}&
+\text{ - }0.314Z_1
+\text{ - }0.392Z_2
++0.117Z_3
++0.295Z_4
++0.259Z_5\\
+&+0.446Z_6
++0.092Z_7
++0.006Z_8
+\text{ - }0.244Z_9
++0.415Z_{10}
++0.375Z_{11}
+\end{aligned}
+$$
+
+y
+
+$$
+\begin{aligned}
+CP_2 ={}&
++0.348Z_1
+\text{ - }0.041Z_2
+\text{ - }0.583Z_3
+\text{ - }0.177Z_4
+v0.174Z_5\\
+&\text{ - }0.027Z_6
++0.321Z_7
+\text{ - }0.457Z_8
+\text{ - }0.154Z_9
++0.233Z_{10}
++0.292Z_{11}.
+\end{aligned}
+$$
+
+Observando los valores absolutos de la ecuación del $CP_1$, las variables que más aportan a este componente son las Líneas Telefónicas ($\vert{}0.446\vert{}$), el Consumo de Energía ($\vert{}0.415\vert{}$) y la Mortalidad Infantil ($\vert{}\text{ - }0.392\vert{}$). En la ecuación del $CP_2$, las variables que más aportan a este componente son el porcentaje de mujeres ($\vert{}\text{ - }0.583\vert{}$), la proporción de bosques ($\vert{}\text{ - }0.457\vert{}$) y el crecimiento poblacional ($\vert{}0.348\vert{}$).
+
+### Comprobación de Varianza Total
+
+Para verificar la equivalencia matemática entre la suma de la diagonal de la matriz $S$ y la suma de sus valores propios ($\lambda_i$), ejecutamos la siguiente validación en R:
+
+```{r}
+#| warning: false
+#| message: false
+
+suma_diagonal_S <- sum(diag(S))
+suma_eigen_S <- sum(eigen_S$values)
+
+cat("Suma de la diagonal de S (Traza):", suma_diagonal_S, "\n")
+cat("Suma de los valores propios (eigenvalues):", suma_eigen_S, "\n")
+cat("Son idénticos?:", all.equal(suma_diagonal_S, suma_eigen_S), "\n")
+
+```
+
+Como se observa, la varianza total de los datos originales es idéntica a la suma de las varianzas reproducidas por los componentes principales.
+
+# Parte II: Gráficas y Puntuaciones (Scores)
+
+```{r}
+#| warning: false
+#| message: false
+#| fig-width: 5
+#| fig-height: 5
+library(stats)
+cpS <- princomp(X, cor = FALSE)
+
+scores_S <- cpS$scores
+
+plot(
+  scores_S[,1],
+  scores_S[,2],
+  type = "p",
+  main = "Scores - Matriz de Covarianzas (S)",
+  xlab = "CP1",
+  ylab = "CP2"
+)
+
+text(
+  scores_S[,1],
+  scores_S[,2],
+  labels = 1:nrow(X),
+  pos = 3,
+  cex = 0.6
+)
+
+cpR <- princomp(X, cor = TRUE)
+
+scores_R <- cpR$scores
+
+plot(
+  scores_R[,1],
+  scores_R[,2],
+  type = "p",
+  main = "Scores - Matriz de Correlaciones (R)",
+  xlab = "CP1",
+  ylab = "CP2"
+)
+
+text(
+  scores_R[,1],
+  scores_R[,2],
+  labels = 1:nrow(X),
+  pos = 3,
+  cex = 0.6
+)
+
+biplot(cpS, main = "Biplot - Covarianzas")
+biplot(cpR, main = "Biplot - Correlaciones")
+```
+
+```{r}
+summary(cpS)
+cpS$loadings
+head(cpS$scores)
+
+summary(cpR)
+cpR$loadings
+head(cpR$scores)
+
+```
+
+### Interpretación de los gráficos y puntuaciones
+
+En los gráficos elaborados con la matriz de covarianzas (S), las variables con valores numéricos muy grandes como PNB95 o ProdElec dominan por completo el análisis, haciendo que los demás países y variables se amontonen. Al usar la matriz de correlaciones (R), se estandarizan los datos y vemos una distribución más equilibrada en el espacio.
+
+En el biplot, LinTelf, ConsEner y EmisCO2 presentan una orientación asociada positivamente con CP1, mientras que MortInf presenta una orientación opuesta. Esto es consistente con una asociación negativa entre estas variables y la mortalidad infantil en el espacio representado por las dos primeras componentes.
+
+Posibles datos atípicos:
+
+- Los países 16 y 37 se alejan mucho en el eje del CP1, lo que indica un nivel de infraestructura muy por encima del promedio.
+
+- Los países 31 y 48 son valores atípicos en el eje del CP2 por sus proporciones particulares en variables demográficas como PorcMujeres.
+
+### Exploración del comando princomp()
+
+Al utilizar la función `princomp()` de la librería `stats`, se exploraron los siguientes subcomandos para facilitar el análisis:
+- `summary(cpS)`: Nos proporciona un resumen estadístico rápido, mostrando la desviación estándar, la proporción de varianza explicada y la varianza acumulada por cada componente principal.
+- `cpS$loadings`: Muestra la matriz de cargas (vectores propios), indicando el peso que tiene cada variable original en la construcción de los componentes. Para facilitar la lectura, R oculta visualmente los valores muy cercanos a cero.
+- `cpS$scores`: Almacena la matriz con las coordenadas exactas de las observaciones (los 96 países) transformadas al nuevo espacio de los componentes principales, lo cual nos permite graficarlos.
+
+El signo global de un componente es arbitrario, por ello algunos resultados de princomp() pueden presentar todos los coeficientes con signo contrario respecto a eigen(), sin alterar la interpretación ni la varianza explicada.
+
+# Parte III: Análisis Visual con FactoMineR
+
+```{r}
+#| warning: false
+#| message: false
+#| fig-width: 5
+#| fig-height: 5
+library(FactoMineR)
+library(factoextra)
+
+pca_S <- PCA(
+  X,
+  scale.unit = FALSE,
+  graph = FALSE
+)
+
+pca_R <- PCA(
+  X,
+  scale.unit = TRUE,
+  graph = FALSE
+)
+
+fviz_pca_ind(
+  pca_S,
+  addEllipses = TRUE,
+  repel = FALSE
+)
+
+fviz_pca_var(
+  pca_S,
+  repel = TRUE
+)
+
+fviz_screeplot(
+  pca_S,
+  addlabels = TRUE
+)
+
+fviz_contrib(
+  pca_S,
+  choice = "var",
+  axes = 1
+)
+
+fviz_contrib(
+  pca_S,
+  choice = "var",
+  axes = 2
+)
+
+
+fviz_pca_ind(
+  pca_R,
+  addEllipses = TRUE,
+  repel = FALSE
+)
+fviz_pca_var(
+  pca_R,
+  repel = TRUE
+)
+fviz_screeplot(
+  pca_R,
+  addlabels = TRUE
+)
+fviz_contrib(
+  pca_R,
+  choice = "var",
+  axes = 1
+)
+fviz_contrib(
+  pca_R,
+  choice = "var",
+  axes = 2
+)
+
+```
+
+### Opciones del comando `PCA()`
+
+La función `PCA()` de `FactoMineR` permite controlar diferentes aspectos del análisis. Una opción particularmente importante es `scale.unit`. Cuando se establece como `TRUE`, las variables son estandarizadas antes de calcular las componentes, por lo que el análisis corresponde al enfoque basado en la matriz de correlaciones. Cuando se establece como `FALSE`, las variables conservan sus unidades originales y el análisis corresponde al enfoque basado en la matriz de varianzas-covarianzas.
+
+La función también permite establecer si se desean generar gráficos automáticamente mediante `graph`, así como incorporar variables suplementarias que no participan directamente en la construcción de las componentes principales. Estas opciones facilitan la exploración y posterior interpretación del análisis.
+
+
+### Interpretación de los gráficos
+
+En el análisis basado en la matriz de covarianzas, las variables que presentan mayores escalas numéricas tienen una influencia considerable sobre las componentes principales. Esto provoca que la representación de los países esté dominada principalmente por las variables con mayor variabilidad absoluta. Por esta razón, la interpretación conjunta de los indicadores resulta menos equilibrada.
+
+En el análisis basado en la matriz de correlaciones, las variables fueron estandarizadas antes de realizar el PCA. La representación resulta más equilibrada y permite observar con mayor claridad las relaciones existentes entre los diferentes indicadores.
+
+En el gráfico de variables, las variables que apuntan en direcciones similares presentan asociaciones positivas, mientras que las que apuntan en direcciones opuestas presentan asociaciones negativas. Asimismo, una mayor cercanía de una variable a la circunferencia de correlaciones indica una mejor representación de dicha variable en el plano formado por las dos primeras componentes.
+
+En el gráfico de individuos, los países ubicados cerca unos de otros presentan perfiles similares respecto a los indicadores considerados. Por el contrario, los países alejados del centro de la distribución presentan características diferentes respecto al conjunto de observaciones.
+
+Algunos países aparecen alejados de la concentración principal de observaciones y pueden considerarse observaciones potencialmente atípicas. Sin embargo, su posición en el gráfico no es suficiente por sí sola para afirmar que se trata de errores o valores atípicos estadísticos; sería necesario revisar sus valores originales para determinar qué indicadores son responsables de su posición.
+
+Posibles datos atípicos:
+
+- Los países 16 y 37 se alejan mucho en el eje del CP1, lo que indica un nivel de infraestructura muy por encima del promedio.
+
+- Los países 31 y 48 son valores atípicos en el eje del CP2 por sus proporciones particulares en variables demográficas como PorcMujeres.
+
+En el análisis de correlaciones, las variables LinTelf, ConsEner y EmisCO2 presentan una relación positiva importante con la primera componente, mientras que MortInf presenta una relación negativa. En la segunda componente destacan especialmente PorcMujeres y PropBosq, mientras que CrecPobl también presenta una contribución importante.
+
+
+
+# Parte IV: Conclusiones y Comparación
+
+## Comparación de las matrices S y R
+
+Los resultados muestran una diferencia importante entre realizar el análisis de componentes principales utilizando la matriz de varianzas-covarianzas y utilizar la matriz de correlaciones.
+
+Con la matriz de varianzas-covarianzas, la primera componente explica aproximadamente el 90.35 % de la variabilidad total y la segunda aproximadamente el 9.65 %. Aunque esto permite representar prácticamente toda la variabilidad con dos componentes, el resultado está fuertemente condicionado por las diferentes escalas de medición de las variables. En particular, las variables con mayor variabilidad absoluta tienen una influencia mucho mayor en la construcción de las componentes.
+
+Por otro lado, al utilizar la matriz de correlaciones, las variables son estandarizadas y cada indicador participa en una escala comparable. La primera componente explica el 36.64 % y la segunda el 17.55 %, acumulando el 54.18 % de la variabilidad. Aunque se requiere un mayor número de componentes para explicar una proporción elevada de la varianza, este análisis permite representar de manera más equilibrada los diferentes indicadores económicos, sociales, ambientales y de infraestructura.
+
+Por lo anterior se considera más apropiado utilizar el análisis basado en la matriz de correlaciones, ya que resulta más útil para interpretar las relaciones existentes entre los indicadores y construir componentes que representen conjuntamente diferentes dimensiones del desarrollo de los países.
+
+
+### Variables con mayor contribución y combinaciones finales
+Basándonos en los coeficientes absolutos y los gráficos de la matriz R, las variables que más contribuyen son:
+- Para el CP1: LinTelf (0.446), ConsEner (0.415), MortInf (0.392) y EmisCO2 (0.375).
+- Para el CP2: PorcMujeres (0.583), PropBosq (0.457) y CrecPobl (0.348).
+
+Las combinaciones finales recomendadas para el análisis son:
+$$
+\begin{aligned}
+CP_1 ={}&
+\text{ - }0.314Z_1
+\text{ - }0.392Z_2
++0.117Z_3
++0.295Z_4
++0.259Z_5\\
+&+0.446Z_6
++0.092Z_7
++0.006Z_8
+\text{ - }0.244Z_9
++0.415Z_{10}
++0.375Z_{11}
+\end{aligned}
+$$
+
+y
+
+$$
+\begin{aligned}
+CP_2 ={}&
++0.348Z_1
+\text{ - }0.041Z_2
+\text{ - }0.583Z_3
+\text{ - }0.177Z_4
+\text{ - }0.174Z_5\\
+&\text{ - }0.027Z_6
++0.321Z_7
+\text{ - }0.457Z_8
+\text{ - }0.154Z_9
++0.233Z_{10}
++0.292Z_{11}.
+\end{aligned}
+$$
+
+### Interpretación de resultados
+- El CP1 puede interpretarse como un **"Índice de Infraestructura y Desarrollo"**, ya que contrapone el nivel tecnológico y económico de un país contra sus niveles de mortalidad infantil. Valores altos describen naciones con amplia cobertura de servicios.
+- El CP2 puede interpretarse como un **"Índice Demográfico-Forestal"**, fuertemente marcado por la participación laboral de las mujeres y la cobertura de bosques en contraste con el crecimiento poblacional.
+
+
+
+# Declaratoria de uso de IA durante el desarrollo del trabajo
+
+Opción B. Se utilizó IA especificando lo siguiente:
+
+- Herramienta: Gemini (modelo de lenguaje de Inteligencia Artificial).
+
+- Uso realizado: Se utilizó como tutor y asistente de revisión para apoyar en el análisis estadístico de Componentes Principales (PCA). La IA ayudó a verificar el cumplimiento de cada rubro y a estructurar la retroalimentación sobre la justificación entre la matriz de covarianzas y la de correlaciones, asi como apoyo en el significado de cada grafico de manera teorica y posteriormente práctica con los datos de la actividad.
+
+- Secciones donde se utilizó: En la etapa de revisión final de la estructura del documento, en la parte III apoyando con los gráficos y en la validación de cumplimiento de los requisitos de la tarea (Partes I a la IV).
+
+- Validación realizada por los estudiantes: Se leyó críticamente la retroalimentación generada para confirmar que los argumentos y conclusiones presentadas en el documento fueran estadísticamente congruentes.
+
+- Confirmación: Confirmo que la información analizada con ayuda de la IA fue revisada y verificada en su totalidad, y asumo la completa responsabilidad del contenido final entregado y las conclusiones expuestas en este trabajo.
