@@ -285,15 +285,14 @@
 \setlength{\parindent}{1.5em}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage{graphicx}
-\usepackage{adjustbox}
-\let\oldtabular\tabular
-\let\endoldtabular\endtabular
-\renewenvironment{tabular}{\begin{adjustbox}{max width=\textwidth}\oldtabular}{\endoldtabular\endadjustbox}
 \newcommand{\titulo}{Etapa 2}
-\newcommand{\subtitulo}{subtitulo}
-\newcommand{\autor}{Angel Ruben Galindo Alvarez}
-\newcommand{\matricula}{A00228356}
+\newcommand{\subtitulo}{Conociendo los datos}
+\newcommand{\autores}{
+  Angel Ruben Galindo Alvarez & A00228356 \\
+  Jorge Raul Martinez Ramirez & A01286802 \\
+  Roberto Perez Castillo & A01286834 \\
+  Alejandro Torres & A00840943
+}
 \newcommand{\curso}{MA2003B Análisis Multivariado}
 \newcommand{\profesor}{Blanca Rosa Ruiz Hernández \\ Raúl Gómez Muñoz}
 \newcommand{\campus}{Campus Monterrey}
@@ -383,7 +382,11 @@
 
 \vspace{1cm}
 
-{\normalsize\textsc{\autor\ $\cdot$\ \matricula}}
+% Bloque formateado para múltiples autores y matrículas
+{\normalsize\textsc{
+  \autores \\
+  Equipo 6
+}}
 
 \vspace{0.6cm}
 
@@ -542,65 +545,79 @@ Estadísticas}\label{caracteruxedsticas-estaduxedsticas}
 
 \protect\phantomsection\label{exploracion-estadistica-3}
 {\def\LTcaptype{none} % do not increment counter
-\begin{longtable}[]{@{}lllllll@{}}
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.2375}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1125}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1375}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1500}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1500}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1125}}@{}}
 \toprule\noalign{}
-& mean & mediana & std & varianza & min & max \\
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Media
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Mediana
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Desv.Est
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Varianza
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Min
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Max
+\end{minipage} \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-Fecha & 2023-01-30 04:59:27.375751 & 2023-02-17 00:00:00 & NaN & NaN &
-2020-01-01 00:00:00 & 2025-12-31 00:00:00 \\
-Horas\_Registradas & 23.994499 & 24.0 & 0.081727 & 0.01 & 22.0 & 24.0 \\
-CO & 1.320355 & 1.148413 & 0.853062 & 0.73 & 0.050417 & 9.206087 \\
-NO & 15.319099 & 7.104348 & 29.273828 & 856.96 & 0.5 & 427.291667 \\
-NO2 & 14.675147 & 12.725 & 8.882273 & 78.89 & 0.063158 & 95.179167 \\
-NOX & 29.445311 & 20.28 & 32.504226 & 1056.52 & 0.5 & 457.954167 \\
-O3 & 26.780897 & 26.5 & 9.423145 & 88.80 & 1.5 & 77.75 \\
-PM10 & 57.462583 & 52.291667 & 27.849965 & 775.62 & 5.761905 &
-301.541667 \\
-PM2.5 & 20.266959 & 18.968571 & 10.175263 & 103.54 & 2.0 & 191.391304 \\
-PRS & 715.236321 & 714.2625 & 9.26524 & 85.84 & 681.805556 &
-747.666667 \\
-RH & 55.001608 & 57.25 & 17.478992 & 305.52 & 1.47619 & 99.722222 \\
-SO2 & 4.95991 & 4.145833 & 3.13212 & 9.81 & 0.585714 & 61.775 \\
-SR & 0.147738 & 0.149083 & 0.234704 & 0.06 & 0.0 & 25.343208 \\
-TOUT & 22.792355 & 24.51375 & 8.014495 & 64.23 & -57.794348 &
-36.783889 \\
-WDR & 140.977674 & 134.208333 & 62.15396 & 3863.11 & 1.454545 &
-357.142857 \\
-WSR & 8.31386 & 7.904167 & 4.734752 & 22.42 & 0.104348 & 158.858333 \\
-RAINF & 0.71115 & 0.0 & 32.08521 & 1029.46 & 0.0 & 4897.1 \\
+Horas\_Registradas & 23.99 & 24 & 0.08 & 0.01 & 22 & 24 \\
+CO & 1.32 & 1.15 & 0.85 & 0.73 & 0.05 & 9.21 \\
+NO & 15.32 & 7.1 & 29.27 & 856.96 & 0.5 & 427.29 \\
+NO2 & 14.68 & 12.72 & 8.88 & 78.89 & 0.06 & 95.18 \\
+NOX & 29.45 & 20.28 & 32.5 & 1056.52 & 0.5 & 457.95 \\
+O3 & 26.78 & 26.5 & 9.42 & 88.8 & 1.5 & 77.75 \\
+PM10 & 57.46 & 52.29 & 27.85 & 775.62 & 5.76 & 301.54 \\
+PM2.5 & 20.27 & 18.97 & 10.18 & 103.54 & 2 & 191.39 \\
+PRS & 715.24 & 714.26 & 9.27 & 85.84 & 681.81 & 747.67 \\
+RH & 55 & 57.25 & 17.48 & 305.52 & 1.48 & 99.72 \\
+SO2 & 4.96 & 4.15 & 3.13 & 9.81 & 0.59 & 61.78 \\
+SR & 0.15 & 0.15 & 0.23 & 0.06 & 0 & 25.34 \\
+TOUT & 22.79 & 24.51 & 8.01 & 64.23 & -57.79 & 36.78 \\
+WDR & 140.98 & 134.21 & 62.15 & 3863.11 & 1.45 & 357.14 \\
+WSR & 8.31 & 7.9 & 4.73 & 22.42 & 0.1 & 158.86 \\
+RAINF & 0.71 & 0 & 32.09 & 1029.46 & 0 & 4897.1 \\
 \end{longtable}
 }
 
 \protect\phantomsection\label{exploracion-estadistica-4}
-\textbf{Tabla de Frecuencia (Variable Cualitativa - Estación):}
+\textbf{Tabla de Frecuencia (Estación):}
 
 \protect\phantomsection\label{exploracion-estadistica-5}
 {\def\LTcaptype{none} % do not increment counter
-\begin{longtable}[]{@{}lll@{}}
+\begin{longtable}[]{@{}lr@{}}
 \toprule\noalign{}
-& Estacion & Frecuencia \\
+Estacion & Frecuencia \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-0 & CE & 2192 \\
-1 & NE & 2192 \\
-2 & NE2 & 2192 \\
-3 & NO & 2192 \\
-4 & NO2 & 2192 \\
-5 & NTE & 2192 \\
-6 & NTE2 & 2192 \\
-7 & SE & 2192 \\
-8 & SE2 & 2192 \\
-9 & SE3 & 2192 \\
-10 & SO & 2192 \\
-11 & SO2 & 2192 \\
-12 & SUR & 2192 \\
-13 & NE3 & 1826 \\
-14 & NO3 & 1127 \\
+CE & 2192 \\
+NE & 2192 \\
+NE2 & 2192 \\
+NO & 2192 \\
+NO2 & 2192 \\
+NTE & 2192 \\
+NTE2 & 2192 \\
+SE & 2192 \\
+SE2 & 2192 \\
+SE3 & 2192 \\
+SO & 2192 \\
+SO2 & 2192 \\
+SUR & 2192 \\
+NE3 & 1826 \\
+NO3 & 1127 \\
 \end{longtable}
 }
 
@@ -659,47 +676,56 @@ modelo.
 
 \subsubsection{ANOVA}\label{anova}
 
-Primero utilizaremos la técnica de ANOVA (Analysis of Variance).
+Primero utilizaremos la técnica de ANOVA (Analysis of Variance) para
+saber si entre las estaciones hay diferencias significativas en la
+distribución de las variables, como se puede ver en la siguiente tabla.
+\cite{fast1998meteorological}
 
 {\def\LTcaptype{none} % do not increment counter
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}@{}}
+\begin{longtable}[]{@{}lllllll@{}}
 \toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Variable
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Levene\_p\_value
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Homoscedastic
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Test\_Used
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-ANOVA\_p\_value
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Significant\_Diff
-\end{minipage} \\
+& Variable & p\_value & Homoscedastic & Test & ANOVA\_p & Significant \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-0 & CO & 0.0000 & False & Welch's ANOVA (Alexander-Govern) & 0.00000 &
-True \\
-1 & NO & 0.0000 & False & Welch's ANOVA (Alexander-Govern) & 0.00000 &
-True \\
+0 & CO & 0.0000 & False & Welch's ANOVA & 0.00000 & True \\
+1 & NO & 0.0000 & False & Welch's ANOVA & 0.00000 & True \\
 \ldots{} & \ldots{} & \ldots{} & \ldots{} & \ldots{} & \ldots{} &
 \ldots{} \\
-14 & Mes & 0.0339 & False & Welch's ANOVA (Alexander-Govern) & 0.00002 &
-True \\
+14 & Mes & 0.0339 & False & Welch's ANOVA & 0.00002 & True \\
 15 & Hora & 1.0000 & True & Standard ANOVA & 1.00000 & False \\
 \end{longtable}
 }
+
+\subsubsection{Random Forest}\label{random-forest}
+
+\protect\phantomsection\label{random-forest}
+\begin{verbatim}
+Recomendaciondes de regresores por estacion mediante Random Forest:
+Station  Samples_Used Top_1_Regressor Top_2_Regressor Top_3_Regressor Top_4_Regressor Top_5_Regressor Top_6_Regressor
+     CE          2192             NO2             SO2              CO              SR             PRS              RH
+     NE          2192             NOX              RH             SO2             PRS              CO             WSR
+    NE2          2192             NO2              RH              CO             PRS              NO             SO2
+    NE3          1826              RH             NO2             NOX             PRS            TOUT              CO
+     NO          2192             SO2              NO              RH             WDR             PRS              CO
+    NO2          2192              RH              CO            TOUT             NO2             WDR             WSR
+    NO3          1127              SR              RH             NO2             SO2             WDR             PRS
+    NTE          2192             NOX              NO              RH              CO             WDR             NO2
+   NTE2          2192              NO              RH              CO             PRS             NOX             WDR
+     SE          2192              RH             NO2             PRS              CO             SO2            TOUT
+    SE2          2192             NO2              CO              RH             NOX              NO             PRS
+    SE3          2192             NOX              RH             NO2              CO              SR             PRS
+     SO          2192              RH             NOX              NO             PRS             WDR              CO
+    SO2          2192             PRS             NO2              CO              RH             WSR             SO2
+    SUR          2192              RH             PRS              NO              CO             WDR             NO2
+\end{verbatim}
+
+Cada estación tiene su propio conjunto de variables que más influyen en
+la predicción de PM10. Por ejemplo, para la estación ``CE'', los
+factores como el \(NO_2\) y \(SO_2\) son cruciales, mientras que para
+``SUR'', la humedad relativa y la presión atmosférica son más
+importantes. \cite{genuer2010variable}
 
 \section{Resumen, Próximos Pasos y Preguntas
 Emergentes}\label{resumen-pruxf3ximos-pasos-y-preguntas-emergentes}
@@ -771,20 +797,19 @@ trabajo}\label{declaratoria-de-uso-de-ia-durante-el-desarrollo-del-trabajo}
   en la estructuración lógica del reporte metodológico CRISP-DM (Etapa
   2) y en la sintaxis para el cálculo de estadísticas descriptivas.
 \item
-  \textbf{Secciones donde se utilizó:} En la redacción del objetivo,
-  planteamiento de técnicas estadísticas, generación de tablas de
-  frecuencias/dispersión (Sección 2), código de visualización
-  exploratoria (Sección 3) y rutinas de validación de calidad (Sección
-  4).
+  \textbf{Secciones donde se utilizó:} En el planteamiento de técnicas
+  estadísticas, generación de tablas de frecuencias y código de
+  visualización.
 \item
   \textbf{Validación realizada por los estudiantes:} Se verificó que el
   código Python procesara correctamente el archivo CSV del proyecto,
   revisando visualmente los gráficos generados y cotejando que los
   estadísticos descriptivos (media, nulos, rangos) coincidieran con el
   conocimiento empírico de la base de datos de calidad del aire.
-  \textbf{Confirmo que revisé, verifiqué y asumo la total
-  responsabilidad del contenido final entregado en esta actividad.}
 \end{itemize}
+
+\textbf{Confirmo que revisé, verifiqué y asumo la total responsabilidad
+del contenido final entregado en esta actividad.}
 
 
 \printbibliography

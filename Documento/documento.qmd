@@ -1,8 +1,6 @@
 ---
 titulo: "Etapa 2"
 subtitulo: "Conociendo los datos"
-autor: "Angel Ruben Galindo Alvarez"
-matricula: "A00228356"
 curso: "MA2003B Análisis Multivariado"
 profesor: "Blanca Rosa Ruiz Hernández y Raúl Gómez Muñoz"
 campus: "Campus Monterrey"
@@ -27,15 +25,14 @@ format:
       - text: |
           \usepackage[T1]{fontenc}
           \usepackage[utf8]{inputenc}
-          \usepackage{graphicx}
-          \usepackage{adjustbox}
-          \let\oldtabular\tabular
-          \let\endoldtabular\endtabular
-          \renewenvironment{tabular}{\begin{adjustbox}{max width=\textwidth}\oldtabular}{\endoldtabular\endadjustbox}
           \newcommand{\titulo}{Etapa 2}
-          \newcommand{\subtitulo}{subtitulo}
-          \newcommand{\autor}{Angel Ruben Galindo Alvarez}
-          \newcommand{\matricula}{A00228356}
+          \newcommand{\subtitulo}{Conociendo los datos}
+          \newcommand{\autores}{
+            Angel Ruben Galindo Alvarez & A00228356 \\
+            Jorge Raul Martinez Ramirez & A01286802 \\
+            Roberto Perez Castillo & A01286834 \\
+            Alejandro Torres & A00840943 
+          }
           \newcommand{\curso}{MA2003B Análisis Multivariado}
           \newcommand{\profesor}{Blanca Rosa Ruiz Hernández \\ Raúl Gómez Muñoz}
           \newcommand{\campus}{Campus Monterrey}
@@ -119,32 +116,29 @@ filas, columnas = df.shape
 
 display(Markdown(f"**Dimensión del dataset:** {filas} registros y {columnas} columnas."))
 
-# 2. Medidas estadísticas para variables cuantitativas
-stats_cuant = df.describe().T
-
-moda = df.select_dtypes(include=[np.number]).mode().iloc[0]
-varianza = df.select_dtypes(include=[np.number]).var()
+# 2. Medidas estadísticas estrictamente para variables numéricas (evita el error de decimales)
+df_numerico = df.select_dtypes(include=[np.number])
+stats_cuant = df_numerico.describe().T
 
 stats_cuant['mediana'] = stats_cuant['50%']
-stats_cuant['moda'] = moda
-stats_cuant['varianza'] = varianza
-stats_cuant['rango'] = stats_cuant['max'] - stats_cuant['min']
+stats_cuant['varianza'] = df_numerico.var()
 
-# Para evitar el desbordamiento horizontal, seleccionamos las métricas clave esenciales
+# Columnas clave con nombres cortos
 columnas_mostrar = ['mean', 'mediana', 'std', 'varianza', 'min', 'max']
 
-display(Markdown("**Estadísticas de Variables Cuantitativas:**"))
-
-# Renderizado mediante Styler con auto-fit estricto de LaTeX/HTML
+# Ahora el round(2) sí funcionará porque todo es numérico
 df_sub = stats_cuant[columnas_mostrar].round(2)
-display(df_sub)
+df_sub.columns = ['Media', 'Mediana', 'Desv.Est', 'Varianza', 'Min', 'Max']
 
-# 3. Distribución de frecuencias para variables cualitativas (Estación)
+display(Markdown("**Estadísticas de Variables Cuantitativas:**"))
+display(Markdown(df_sub.to_markdown()))
+
+# 3. Distribución de frecuencias
 frecuencia_estacion = df['Estacion'].value_counts().reset_index()
 frecuencia_estacion.columns = ['Estacion', 'Frecuencia']
 
-display(Markdown("**Tabla de Frecuencia (Variable Cualitativa - Estación):**"))
-display(frecuencia_estacion)
+display(Markdown("\n**Tabla de Frecuencia (Estación):**"))
+display(Markdown(frecuencia_estacion.to_markdown(index=False)))
 ```
 
 # Exploración Visual de los Datos
@@ -247,18 +241,118 @@ En esta etapa, nos centramos en seleccionar las variables que nos resulten más 
 
 ### ANOVA
 
-Primero utilizaremos la técnica de ANOVA (Analysis of Variance).
+Primero utilizaremos la técnica de ANOVA (Analysis of Variance) para saber si entre las estaciones hay diferencias significativas en la distribución de las variables, como se puede ver en la siguiente tabla. \cite{fast1998meteorological}
 
-|  | Variable | Levene_p_value | Homoscedastic | Test_Used | ANOVA_p_value | Significant_Diff |
+|  | Variable | p_value | Homoscedastic | Test | ANOVA_p | Significant |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0 | CO | 0.0000 | False | Welch's ANOVA (Alexander-Govern) | 0.00000 | True |
-| 1 | NO | 0.0000 | False | Welch's ANOVA (Alexander-Govern) | 0.00000 | True |
+| 0 | CO | 0.0000 | False | Welch's ANOVA | 0.00000 | True |
+| 1 | NO | 0.0000 | False | Welch's ANOVA | 0.00000 | True |
 | ... |...|...|...|...|...|...|
-| 14 | Mes | 0.0339 | False | Welch's ANOVA (Alexander-Govern) | 0.00002 | True |
+| 14 | Mes | 0.0339 | False | Welch's ANOVA  | 0.00002 | True |
 | 15 | Hora | 1.0000 | True | Standard ANOVA | 1.00000 | False |
 
 
+### Random Forest
 
+```{python}
+#| label: random-forest
+#| echo: false
+
+from sklearn.ensemble import RandomForestRegressor
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestRegressor
+
+def select_features_per_station(df: pd.DataFrame, target_var: str = 'PM10', top_n: int = 7, stations_to_plot: list = None):
+    """Calculates Random Forest feature importance for a target variable per individual station.
+
+    Returns:
+    - summary_df: DataFrame mapping each station to its top recommended regressors.
+    - all_importances: Dictionary of feature importance Series for each station.
+    """
+    candidate_features = [
+        'TOUT', 'RH', 'WSR', 'WDR', 'PRS', 'SR',  # Weather
+        'CO', 'NO', 'NO2', 'NOX', 'O3', 'SO2',    # Co-pollutants
+    ]
+
+    valid_features = [c for c in candidate_features if c in df.columns]
+    stations = df['Estacion'].unique()
+    
+    if stations_to_plot is None:
+        stations_to_plot = stations[:2].tolist()
+
+    all_importances = {}
+    summary_data = []
+    plot_data = {} # Store valid data to prevent empty subplots
+
+    for station in stations:
+        station_data = df[df['Estacion'] == station].copy()
+        clean_data = station_data[[target_var] + valid_features].dropna()
+
+        if len(clean_data) < 100:
+            print(f'Skipping station {station}: Insufficient clean rows ({len(clean_data)}).')
+            continue
+
+        X = clean_data[valid_features]
+        y = np.log1p(clean_data[target_var])
+
+        # Fit Random Forest Regressor
+        rf = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42, n_jobs=-1)
+        rf.fit(X, y)
+
+        importances = pd.Series(rf.feature_importances_, index=X.columns).sort_values(ascending=False)
+        all_importances[station] = importances
+        top_features = importances.head(top_n).index.tolist()
+
+        # Build dynamic summary dictionary based on top_n
+        summary_dict = {'Station': station, 'Samples_Used': len(clean_data)}
+        for i in range(top_n):
+            summary_dict[f'Top_{i+1}_Regressor'] = top_features[i] if len(top_features) > i else None
+        
+        summary_data.append(summary_dict)
+
+        # Stage data for plotting
+        if station in stations_to_plot:
+            plot_data[station] = importances.head(top_n)
+
+    # Subplot visualization (Generates only for valid, non-skipped stations)
+    n_plots = len(plot_data)
+    if n_plots > 0:
+        fig, axes = plt.subplots(1, n_plots, figsize=(6 * n_plots, 4), sharex=True)
+        if n_plots == 1:
+            axes = [axes]
+            
+        for ax, (station, importances) in zip(axes, plot_data.items()):
+            importances.plot(kind='barh', ax=ax, color='teal')
+            ax.invert_yaxis()
+            ax.set_title(f'Station: {station}', fontsize=12, fontweight='bold')
+            ax.grid(axis='x', linestyle='--', alpha=0.6)
+
+        plt.suptitle(f'Top Feature Importances for log1p({target_var})', fontsize=14, y=1.05)
+        plt.tight_layout()
+        plt.show()
+
+    summary_df = pd.DataFrame(summary_data)
+
+    print
+    print(f'Recomendaciondes de regresores por estacion mediante Random Forest:')
+    print(summary_df.to_string(index=False))
+
+    return summary_df, all_importances
+
+    # Llama a la función pasando las dos estaciones que deseas ver
+summary_df, importances = select_features_per_station(
+    df=df, 
+    target_var='PM10', 
+    top_n=6, 
+    stations_to_plot=['Obispado', 'San Bernabé']  # Sustituye por 2 estaciones reales de tu dataset
+)
+```
+
+Cada estación tiene su propio conjunto de variables que más influyen en la predicción de PM10. Por ejemplo, para la estación "CE", los factores como el $NO_2$ y $SO_2$ son cruciales, mientras que para "SUR", la humedad relativa y la presión atmosférica son más importantes. \cite{genuer2010variable}
 
 # Resumen, Próximos Pasos y Preguntas Emergentes
 
@@ -288,8 +382,10 @@ El siguiente paso natural es adentrarnos en la fase de Modelado. Específicament
 
 *   **Herramienta:** Gemini (Google).
 *   **Uso realizado:** Se utilizó como asistente de programación y estructuración. La IA ayudó a redactar el código en Python (con enfoque en `pandas`, `seaborn` y `matplotlib`) bajo el formato de Quarto Document (`.qmd`). Asimismo, asistió en la estructuración lógica del reporte metodológico CRISP-DM (Etapa 2) y en la sintaxis para el cálculo de estadísticas descriptivas.
-*   **Secciones donde se utilizó:** En la redacción del objetivo, planteamiento de técnicas estadísticas, generación de tablas de frecuencias/dispersión (Sección 2), código de visualización exploratoria (Sección 3) y rutinas de validación de calidad (Sección 4).
-*   **Validación realizada por los estudiantes:** Se verificó que el código Python procesara correctamente el archivo CSV del proyecto, revisando visualmente los gráficos generados y cotejando que los estadísticos descriptivos (media, nulos, rangos) coincidieran con el conocimiento empírico de la base de datos de calidad del aire. **Confirmo que revisé, verifiqué y asumo la total responsabilidad del contenido final entregado en esta actividad.**
+*   **Secciones donde se utilizó:** En el planteamiento de técnicas estadísticas, generación de tablas de frecuencias y código de visualización.
+*   **Validación realizada por los estudiantes:** Se verificó que el código Python procesara correctamente el archivo CSV del proyecto, revisando visualmente los gráficos generados y cotejando que los estadísticos descriptivos (media, nulos, rangos) coincidieran con el conocimiento empírico de la base de datos de calidad del aire. 
+
+**Confirmo que revisé, verifiqué y asumo la total responsabilidad del contenido final entregado en esta actividad.**
 
 
 
