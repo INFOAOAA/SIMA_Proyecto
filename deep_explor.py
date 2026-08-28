@@ -9,7 +9,15 @@ import plotly.figure_factory as ff
 import matplotlib.pyplot as plt
 from plotly.subplots import make_subplots
 from scipy.stats import f_oneway
-
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+from scipy import stats
+import pingouin as pg
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis, LinearDiscriminantAnalysis
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from scipy.cluster.hierarchy import dendrogram, fcluster, linkage
+from sklearn.metrics import calinski_harabasz_score, silhouette_score
 
 def standard_measurements(df: pd.DataFrame):
     means = df.mean(axis=0, numeric_only=True)
@@ -55,11 +63,228 @@ def pie_chart(df: pd.DataFrame):
     ax.legend(wedges, counts.index, title="Calidad del aire", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
     plt.show()
 
-def residual_graph(df: pd.DataFrame):
-    fig = make_subplots()
 
 def anova_by_stations(df: pd.DataFrame):
-    f_statistic, p_value = f_oneway()
+    # 1. Select numeric variables only and explicitly exclude Station/Datetime/ID columns
+    cols_to_exclude = ['Estacion', 'Station', 'Fecha y hora', 'Fecha', 'hora']
+
+    # Select columns that are floats/ints and NOT in our exclude list
+    numeric_vars = [
+        col
+        for col in df.select_dtypes(include=[np.number]).columns
+        if col not in cols_to_exclude
+    ]
+
+    results = []
+
+    for var in numeric_vars:
+        # Drop NAs specifically for the current variable and Station
+        clean_df = df[[var, 'Estacion']].dropna()
+
+        # Extract non-empty arrays for each station
+        groups = [
+            group[var].values
+            for name, group in clean_df.groupby('Estacion')
+            if len(group[var]) > 1
+        ]
+
+        # Ensure we have at least 2 station groups with valid data to test
+        if len(groups) < 2:
+            continue
+
+        # Run Levene's Test for Homoscedasticity
+        levene_stat, levene_p = stats.levene(*groups)
+
+        # Check condition: If variances are equal (p > 0.05), use standard ANOVA
+        if levene_p > 0.05:
+            # Q() wraps variable names safely in case they contain spaces or special characters
+            model = ols(f'Q("{var}") ~ C(Estacion)', data=clean_df).fit()
+            anova_tbl = sm.stats.anova_lm(model, typ=2)
+            p_val = anova_tbl.loc['C(Estacion)', 'PR(>F)']
+            method = 'Standard ANOVA'
+        else:
+            # If variances are NOT equal (p <= 0.05), use Welch's ANOVA
+            welch_res = stats.alexandergovern(*groups)
+            p_val = welch_res.pvalue
+            method = "Welch's ANOVA (Alexander-Govern)"
+
+        results.append({
+            'Variable': var,
+            'Levene_p_value': round(float(levene_p), 4),
+            'Homoscedastic': levene_p > 0.05,
+            'Test_Used': method,
+            'ANOVA_p_value': (
+                round(float(p_val), 5) if not np.isnan(p_val) else np.nan
+            ),
+            'Significant_Diff': p_val < 0.05,
+        })
+
+    summary_df = pd.DataFrame(results)
+    print(summary_df)
+    return summary_df
+
+def gaussian_discriminant_per_station(df: pd.DataFrame):
+    cols_to_exclude = ['Estacion', 'Station', 'Fecha y hora', 'Fecha', 'hora', 'Mes', 'Hora']
+
+    # Select columns that are floats/ints and NOT in our exclude list
+    numeric_vars = [
+        col
+        for col in df.select_dtypes(include=[np.number]).columns
+        if col not in cols_to_exclude
+    ]
+    X = df[numeric_vars].dropna()
+    y = df.loc[X.index, 'Estacion']
+
+    # Scale features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_scaled, y, test_size=0.3, random_state=42
+    )
+
+    # Fit QDA model
+    regulation_parameters = np.arange(0,1,0.1)
+    results = []
+    for par in regulation_parameters:
+        try:
+            qda = QuadraticDiscriminantAnalysis(reg_param=par)
+            qda.fit(X_train, y_train)
+            print(f'QDA Classification Accuracy: {qda.score(X_test, y_test):.4f} with {par}')
+
+        except Exception as e:
+            print(f'Regulation parameter {par} no fue posible \nException {e}')
+
+            
+
+    print(f'QDA Classification Accuracy: {max(results):.4f}')
+
+def linear_discriminant_analysis_per_station(df: pd.DataFrame):
+    cols_to_exclude = ['Estacion', 'Station', 'Fecha y hora', 'Fecha', 'hora', 'Mes', 'Hora']
+
+    # Select columns that are floats/ints and NOT in our exclude list
+    numeric_vars = [
+        col
+        for col in df.select_dtypes(include=[np.number]).columns
+        if col not in cols_to_exclude
+    ]
+    X = df[numeric_vars].dropna()
+    y = df.loc[X.index, 'Estacion']
+
+    # Scale features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    lda = LinearDiscriminantAnalysis(n_components=2)
+    X_lda = lda.fit_transform(X_scaled, y)
+
+    # Plot the 2D LDA projection
+    plt.figure(figsize=(10, 6))
+    for station in y.unique():
+        mask = y == station
+        plt.scatter(
+            X_lda[mask, 0], X_lda[mask, 1], label=station, alpha=0.6, edgecolors='k'
+        )
+
+    plt.xlabel('Linear Discriminant 1')
+    plt.ylabel('Linear Discriminant 2')
+    plt.title('Station Separation via LDA')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    plt.show()
+
+def unsupervised_learning(df: pd.DataFrame):
+    # 1. Define pollutant columns only (exclude meteorological noise)
+    pollutant_cols = [
+        'CO',
+        'NO',
+        'NO2',
+        'NOX',
+        'O3',
+        'PM10',
+        'PM2.5',
+        'SO2',
+    ]
+
+    # Filter to only include pollutants present in the DataFrame
+    available_pollutants = [col for col in pollutant_cols if col in df.columns]
+
+    # 2. Compute means and stds for pollutants only
+    station_means = (
+        df.groupby('Estacion')[available_pollutants]
+        .mean()
+        .add_suffix('_mean')
+    )
+    station_stds = (
+        df.groupby('Estacion')[available_pollutants]
+        .std()
+        .fillna(0)
+        .add_suffix('_std')
+    )
+
+    # Combine profiles (only pollutant features)
+    station_profiles = pd.concat([station_means, station_stds], axis=1).dropna()
+
+    # 3. Scale feature matrix
+    scaler = StandardScaler()
+    scaled_profiles = scaler.fit_transform(station_profiles)
+
+    # 4. Compute Ward's Hierarchical Linkage on pollutants
+    Z = linkage(scaled_profiles, method='ward')
+
+    clusters = range(3, 7)
+    results = []
+
+    for n_clusters in clusters:
+        cluster_labels = fcluster(Z, t=n_clusters, criterion='maxclust')
+
+        # Compute validation metrics
+        sil_score = silhouette_score(scaled_profiles, cluster_labels)
+        ch_score = calinski_harabasz_score(scaled_profiles, cluster_labels)
+
+        # Build assignment mapping
+        cluster_df = pd.DataFrame({
+            'Estacion': station_profiles.index,
+            'Cluster': [f'Group_{label}' for label in cluster_labels],
+        })
+
+        print(f'\n--- Station Cluster Assignments (k={n_clusters}) ---')
+        print(cluster_df.sort_values(by='Cluster'))
+        print(f'Silhouette Score: {sil_score:.4f}')
+        print(f'Calinski-Harabasz Index: {ch_score:.2f}')
+
+        # Plot Dendrogram with cut line
+        plt.figure(figsize=(10, 6))
+        dendrogram(
+            Z,
+            labels=station_profiles.index.tolist(),
+            leaf_rotation=45,
+            leaf_font_size=11,
+        )
+        plt.title(
+            f'Hierarchical Station Clustering - Pollutants Only (k={n_clusters})'
+        )
+        plt.xlabel('Station')
+        plt.ylabel('Euclidean Distance')
+        plt.axhline(
+            y=Z[-n_clusters + 1, 2],
+            color='r',
+            linestyle='--',
+            label=f'Cut Threshold (k={n_clusters})',
+        )
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+        results.append({
+            'n_clusters': n_clusters,
+            'silhouette': sil_score,
+            'calinski_harabasz': ch_score,
+            'assignments': cluster_df,
+        })
+
+    return results
 
 def visualize_options(data: pd.DataFrame):
     print('''
@@ -68,6 +293,9 @@ def visualize_options(data: pd.DataFrame):
     2. Medidas estándar
     3. Gráfica de distribución
     4. Anova por estación
+    5. Gaussian Discriminant Analysis (Por estación)
+    6. Linear Discriminant Analysis (Por estación)
+    7. Unsupervised para estación
     q) quit
     ''')
     opt = input().strip()
@@ -84,7 +312,17 @@ def visualize_options(data: pd.DataFrame):
             distribution_graph(nums)
             visualize_options(data=data)
         case '4':
-            anova_by_stations(nums)
+            anova_by_stations(df=data)
+            visualize_options(data=data)
+        case '5': 
+            gaussian_discriminant_per_station(df=data)
+            visualize_options(data=data)
+        case '6':
+            linear_discriminant_analysis_per_station(df=data)
+            visualize_options(data=data)
+        case '7':
+            unsupervised_learning(df=data)
+            visualize_options(data=data)
         case 'q':
             pass
         case _: 
@@ -92,7 +330,7 @@ def visualize_options(data: pd.DataFrame):
 
         
 def main():
-    path = os.path.abspath('BasesDeDatosParquet/BD_no_imputation.parquet')
+    path = os.path.abspath('BasesDeDatosParquet/BD_no_standarization.parquet')
     data = pd.read_parquet(path=path)
     visualize_options(data=data)
     #standard_measurements(data)    
