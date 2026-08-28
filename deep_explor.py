@@ -12,11 +12,14 @@ from scipy.stats import f_oneway
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from scipy import stats
+import pingouin as pg
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis, LinearDiscriminantAnalysis
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from scipy.cluster.hierarchy import dendrogram, fcluster, linkage
 from sklearn.metrics import calinski_harabasz_score, silhouette_score
+from sklearn.ensemble import RandomForestRegressor
+
 
 def standard_measurements(df: pd.DataFrame):
     means = df.mean(axis=0, numeric_only=True)
@@ -285,6 +288,111 @@ def unsupervised_learning(df: pd.DataFrame):
 
     return results
 
+def select_features_per_station(df: pd.DataFrame, target_var: str = 'PM10', top_n: int = 7):
+    """Calculates Random Forest feature importance for PM10 per individual station.
+
+    Returns:
+    - summary_df: DataFrame mapping each station to its top recommended
+    regressors.
+    - all_importances: Dictionary of feature importance Series for each
+    station.
+    """
+    candidate_features = [
+        'TOUT',
+        'RH',
+        'WSR',
+        'WDR',
+        'PRS',
+        'SR',  # Weather
+        'CO',
+        'NO',
+        'NO2',
+        'NOX',
+        'O3',
+        'SO2',  # Co-pollutants
+    ]
+
+    valid_features = [c for c in candidate_features if c in df.columns]
+
+    stations = df['Estacion'].unique()
+    all_importances = {}
+    summary_data = []
+
+    # Calculate grid size for subplots
+    n_stations = len(stations)
+    cols = 3
+    rows = (n_stations + cols - 1) // cols
+
+    fig, axes = plt.subplots(rows, cols, figsize=(15, 4 * rows), sharex=True)
+    axes = axes.flatten()
+
+    for idx, station in enumerate(stations):
+        station_data = df[df['Estacion'] == station].copy()
+
+        # Clean missing values for this specific station
+        clean_data = station_data[[target_var] + valid_features].dropna()
+
+        # Skip station if not enough clean samples
+        if len(clean_data) < 100:
+            print(
+                f'Skipping station {station}: Insufficient clean rows ({len(clean_data)}).'
+            )
+            continue
+
+        X = clean_data[valid_features]
+        # Log-transform target variable to stabilize PM10 variance
+        y = np.log1p(clean_data[target_var])
+
+        # Fit Random Forest Regressor
+        rf = RandomForestRegressor(
+            n_estimators=100, max_depth=10, random_state=42, n_jobs=-1
+        )
+        rf.fit(X, y)
+
+        importances = pd.Series(
+            rf.feature_importances_, index=X.columns
+        ).sort_values(ascending=False)
+        all_importances[station] = importances
+
+        top_features = importances.head(top_n).index.tolist()
+
+        summary_data.append({
+            'Station': station,
+            'Top_1_Regressor': top_features[0] if len(top_features) > 0 else None,
+            'Top_2_Regressor': top_features[1] if len(top_features) > 1 else None,
+            'Top_3_Regressor': top_features[2] if len(top_features) > 2 else None,
+            'Samples_Used': len(clean_data),
+        })
+
+        # Subplot visualization
+        ax = axes[idx]
+        importances.head(6).plot(kind='barh', ax=ax, color='teal')
+        ax.invert_yaxis()
+        ax.set_title(f'Station: {station}', fontsize=12, fontweight='bold')
+        ax.grid(axis='x', linestyle='--', alpha=0.6)
+
+    # Turn off unused subplots
+    for j in range(idx + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    plt.suptitle(
+        f'Top Feature Importances for log1p({target_var}) by SIMA Station',
+        fontsize=16,
+        y=1.02,
+    )
+    plt.tight_layout()
+    plt.show()
+
+    summary_df = pd.DataFrame(summary_data)
+
+    print('\n==================================================')
+    print(f'   PROPHET REGRESSOR RECOMMENDATIONS PER STATION')
+    print('==================================================')
+    print(summary_df.to_string(index=False))
+
+    return summary_df, all_importances
+
+
 def visualize_options(data: pd.DataFrame):
     print('''
     Visualizar:
@@ -321,6 +429,9 @@ def visualize_options(data: pd.DataFrame):
             visualize_options(data=data)
         case '7':
             unsupervised_learning(df=data)
+            visualize_options(data=data)
+        case '8':
+            select_features_per_station(df = data)
             visualize_options(data=data)
         case 'q':
             pass
