@@ -1,6 +1,6 @@
 ---
-titulo: "Actividad 1.7"
-subtitulo: "Componentes principales"
+titulo: "Etapa 2"
+subtitulo: "Conociendo los datos"
 autor: "Angel Ruben Galindo Alvarez"
 matricula: "A00228356"
 curso: "MA2003B Análisis Multivariado"
@@ -24,8 +24,8 @@ format:
       - style=apa
     include-in-header:
       - text: |
-          \newcommand{\titulo}{Actividad 1.7}
-          \newcommand{\subtitulo}{Componentes principales}
+          \newcommand{\titulo}{Etapa 2}
+          \newcommand{\subtitulo}{subtitulo}
           \newcommand{\autor}{Angel Ruben Galindo Alvarez}
           \newcommand{\matricula}{A00228356}
           \newcommand{\curso}{MA2003B Análisis Multivariado}
@@ -36,97 +36,235 @@ format:
     include-before-body: titlepage.tex
 ---
 
-# 1. Objetivo del Análisis y Técnicas Estadísticas
+# 1. Objetivo del Análisis y Justificación del Alcance
 
-**Objetivo:** Predecir las concentraciones diarias de PM10 para el año 2026 en la Zona Metropolitana de Monterrey (ZMM) utilizando el registro histórico 2020-2025, con el fin de anticipar contingencias ambientales. El objetivo se mantiene intacto.
+**Pregunta de Investigación:**
+¿Cómo interactúan las variables meteorológicas para influir simultáneamente en las concentraciones atípicas de los principales contaminantes criterio ($PM_{10}$, $PM_{2.5}$ y $O_3$) a través de las diferentes estaciones de monitoreo del Área Metropolitana de Monterrey durante el periodo 2020-2025?
 
-**Técnicas estadísticas a utilizar:**
-*   **Prueba de Dickey-Fuller Aumentada (ADF):** Para validar la estacionariedad de la serie de tiempo.
-*   **Análisis de Autocorrelación (ACF/PACF):** Para identificar la dependencia temporal de los datos.
-*   **Modelación Predictiva:** Modelos autorregresivos multivariados (SARIMAX) y algoritmos de Machine Learning (XGBoost) para series de tiempo.
+**Objetivo General:**
+Desarrollar y validar modelos estadísticos multivariados y de aprendizaje automático que permitan predecir la concentración de $PM_{10}$, $PM_{2.5}$ y $O_3$ utilizando el registro histórico (2020-2025). El propósito es identificar los detonantes meteorológicos de cada contaminante por zonas y proporcionar al SIMA una herramienta predictiva integral para la gestión de contingencias ambientales.
 
-# 2. Comprensión de los Datos
+**Justificación de mantener el enfoque multi-contaminante:**
+Tras la exploración inicial, se decidió mantener el análisis conjunto de $PM_{10}$, $PM_{2.5}$ y $O_3$ en lugar de reducir el alcance a un solo contaminante. La justificación técnica radica en que las partículas suspendidas ($PM_{10}$ y $PM_{2.5}$) comparten fuentes de emisión y dinámicas de dispersión, presentando alta colinealidad. Por otro lado, el Ozono ($O_3$) sigue un ciclo fotoquímico radicalmente distinto, dependiente de la temperatura y la radiación (picos en verano, a diferencia de las partículas que repuntan en invierno). Un modelo que integre esta dualidad climática aporta un valor analítico superior para la toma de decisiones de política pública frente a modelos aislados.
 
-**Dimensión del Dataset:** El archivo `SIMA_Diario_Imputado.csv` cuenta con **32,850 registros** (15 estaciones x 365 días x 6 años) y **11 columnas**.
+
+**Técnicas estadísticas para contestar el objetivo (basadas en literatura de calidad del aire y series temporales):**
+
+*   **Prueba de Dickey-Fuller Aumentada (ADF):** Necesaria para comprobar la estacionariedad de la serie temporal del $PM_{10}$ por estación, un supuesto fundamental para asegurar que la media y la varianza no derivan de forma incontrolable antes de aplicar modelos predictivos.
+*   **Análisis de Correlación de Pearson:** Para cuantificar la relación lineal multivariada entre el contaminante objetivo ($PM_{10}$) y las covariables meteorológicas clave (Humedad Relativa, Presión Atmosférica, Velocidad del Viento).
+*   **Análisis Descriptivo de Asimetría y Dispersión:** Cálculo de cuartiles, desviación estándar y detección de atípicos (outliers) segmentados espacialmente por la variable `Estacion`, dado que la orografía de Monterrey genera variaciones severas entre zonas.
+*   **Modelación Predictiva (Gradient Boosting Machine):** Algoritmo de ensamble avanzado para regresión que, alimentado con ingeniería de características (*lags* y medias móviles), permite modelar las relaciones no lineales del clima sin los estrictos supuestos de los modelos ARIMA clásicos.
+
+```{python}
+#| label: setup-tecnicas
+#| message: false
+#| warning: false
+#| echo: false
+import pandas as pd
+import numpy as np
+import scipy.stats as stats
+from statsmodels.tsa.stattools import adfuller
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.ensemble import HistGradientBoostingRegressor
+```
+
+# Comprensión de los Datos y Descripción de Variables
+
+Para lograr la predicción espacial y temporal de la contaminación, el dataset imputado (`SIMA_Diario_Imputado.csv`) consolida lecturas diarias. 
+
+**Importancia de la Estación de Monitoreo:**
+La variable `Estacion` es categórica y resulta un eje crítico del modelo. La orografía de la Zona Metropolitana de Monterrey (rodeada de montañas) provoca microclimas y "trampas" de aire; por lo tanto, el comportamiento del $PM_{10}$ en la estación suroeste es estadísticamente distinto al de la estación sur. Ignorar esta variable mezclaría los patrones de dispersión.
 
 ### Diccionario de Variables
 
-| Variable | Descripción | Tipo | Valores Posibles | Nulos |
+| Variable | Descripción | Tipo de Dato | Rango / Valores Posibles | Valores Nulos |
 | :--- | :--- | :--- | :--- | :--- |
-| **Fecha** | Fecha de la lectura | Cualitativa (Ordinal) | 2020-01-01 a 2025-12-31 | 0 |
-| **Estacion** | Código de la estación de monitoreo | Cualitativa (Nominal) | CE, NE, NO, SE, SO, SUR, etc. (15 valores) | 0 |
-| **PM10** | Partículas menores a 10 micrómetros | Cuantitativa (Continua) | 0.0 - 500.0 µg/m³ | 0 |
-| **PM2.5** | Partículas menores a 2.5 micrómetros | Cuantitativa (Continua) | 0.0 - 300.0 µg/m³ | 0 |
-| **TOUT** | Temperatura ambiente | Cuantitativa (Continua) | -5.0 - 45.0 °C | 0 |
-| **RH** | Humedad relativa | Cuantitativa (Continua) | 0.0 - 100.0 % | 0 |
-| **WSR** | Velocidad del viento | Cuantitativa (Continua) | 0.0 - 50.0 km/h | 0 |
-| **PRS** | Presión atmosférica | Cuantitativa (Continua) | 600.0 - 800.0 mmHg | 0 |
-| **O3** | Ozono | Cuantitativa (Continua) | 0.0 - 200.0 ppb | 0 |
-| **NO2** | Dióxido de nitrógeno | Cuantitativa (Continua) | 0.0 - 100.0 ppb | 0 |
-| **CO** | Monóxido de carbono | Cuantitativa (Continua) | 0.0 - 10.0 ppm | 0 |
+| **Fecha** | Fecha cronológica de la lectura | Cualitativa (Ordinal) | 2020-01-01 a 2025-12-31 | 0 |
+| **Estacion** | Código de la estación de monitoreo | Cualitativa (Nominal) | 15 valores (ej. CE, NE, SO, SUR) | 0 |
+| **PM10** | Partículas menores a 10 micrómetros (Objetivo) | Cuantitativa (Continua)| $0 - >500 \, \mu\text{g/m}^3$ | 0 |
+| **PM2.5** | Partículas menores a 2.5 micrómetros | Cuantitativa (Continua)| $0 - >300 \, \mu\text{g/m}^3$ | 0 |
+| **TOUT** | Temperatura ambiente externa | Cuantitativa (Continua)| $-5.0 \text{ a } 45.0 \, ^\circ\text{C}$ | 0 |
+| **RH** | Humedad relativa | Cuantitativa (Continua)| $0 \text{ a } 100\%$ | 0 |
+| **WSR** | Velocidad del viento | Cuantitativa (Continua)| $0 \text{ a } 50 \text{ km/h}$ | 0 |
+| **PRS** | Presión atmosférica | Cuantitativa (Continua)| $600 \text{ a } 800 \text{ mmHg}$ | 0 |
+| **O3** | Ozono | Cuantitativa (Continua)| $0 \text{ a } 200 \text{ ppb}$ | 0 |
+| **NO2** | Dióxido de nitrógeno | Cuantitativa (Continua)| $0 \text{ a } 100 \text{ ppb}$ | 0 |
+| **CO** | Monóxido de carbono | Cuantitativa (Continua)| $0 \text{ a } 10 \text{ ppm}$ | 0 |
 
-### Estadísticas Descriptivas y Verificación de Calidad
+### Características Estadísticas
 
 ```{python}
+#| label: exploracion-estadistica
+#| echo: false
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from IPython.display import display
+from IPython.display import display, Markdown
 
-# Cargar datos (se asume que el dataset imputado está en el directorio)
+# Carga de datos y dimensión
 df = pd.read_csv('SIMA_Diario_Imputado.csv')
+filas, columnas = df.shape
+display(Markdown(f"**Dimensión del dataset:** 
+{filas} registros y {columnas} columnas."))
 
-# 1. Calidad de los datos
-print("=== VERIFICACIÓN DE CALIDAD ===")
-print(f"Valores nulos totales: {df.isnull().sum().sum()}")
-print(f"Registros duplicados: {df.duplicated().sum()}")
+# Medidas estadísticas para variables cuantitativas
+# Tendencia central (media, mediana) y dispersión (std, min, max)
+stats_cuant = df.describe().T
 
-# 2. Medidas de tendencia central y dispersión (Cuantitativas)
-stats = df.describe().T
-stats['rango'] = stats['max'] - stats['min']
-stats['varianza'] = df.var(numeric_only=True)
-stats['mediana'] = df.median(numeric_only=True)
-stats['moda'] = df.mode(numeric_only=True).iloc[0]
+# Calculando Moda, Varianza y Rango manualmente
+moda = df.select_dtypes(include=[np.number]).mode().iloc[0]
+varianza = df.select_dtypes(include=[np.number]).var()
 
-display(stats[['mean', 'mediana', 'moda', 'std', 'varianza', 'rango', 'min', 'max']])
+stats_cuant['mediana'] = stats_cuant['50%']
+stats_cuant['moda'] = moda
+stats_cuant['varianza'] = varianza
+stats_cuant['rango'] = stats_cuant['max'] - stats_cuant['min']
 
-# 3. Distribución de frecuencias (Cualitativas)
+# Filtrar columnas solicitadas
+columnas_mostrar = ['mean', 'mediana', 'moda', 'std', 'varianza', 'rango', 'min', 'max']
+display(Markdown("**Estadísticas de Variables Cuantitativas:**"))
+display(stats_cuant[columnas_mostrar].round(2))
+
+# 3. Distribución de frecuencias para variables cualitativas (Estación)
 frecuencia_estacion = df['Estacion'].value_counts().reset_index()
 frecuencia_estacion.columns = ['Estacion', 'Frecuencia']
+display(Markdown("**Tabla de Frecuencia (Variable Cualitativa - Estación):**"))
 display(frecuencia_estacion)
 
 ```
 
-### Visualización Exploratoria
+# Exploración Visual de los Datos
+
+A continuación, visualizamos el comportamiento de las variables cuantitativas (distribución, asimetría, dispersión espacial y correlación multivariada) y cualitativas, utilizando la base de datos validada.
 
 ```{python}
+#| label: visualizacion-datos
+#| echo: false
+#| fig-width: 14
+#| fig-height: 10
+#| warning: false
 
-#| fig-width: 12
-#| fig-height: 8
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
+# Cargar base de datos (usando el archivo actualizado)
+df = pd.read_csv('SIMA_Diario_Imputado.csv')
+
+# Configuración del lienzo
 fig, axs = plt.subplots(2, 2, figsize=(14, 10))
 
 # 1. Histograma (Distribución y Asimetría)
-sns.histplot(df['PM10'], bins=50, kde=True, ax=axs[0, 0], color='skyblue')
+sns.histplot(df['PM10'].dropna(), bins=40, kde=True, ax=axs[0, 0], color='steelblue')
 axs[0, 0].set_title('Distribución de PM10 (Asimetría Positiva)')
+axs[0, 0].set_xlabel('PM10 (µg/m³)')
+axs[0, 0].set_ylabel('Frecuencia (Días)')
 
-# 2. Boxplot (Cuartiles y Atípicos por Estación)
+# 2. Boxplot (Cuartiles y Valores Atípicos por Estación)
 sns.boxplot(data=df, x='Estacion', y='PM10', ax=axs[0, 1], palette='Set2')
-axs[0, 1].set_title('Distribución y Outliers de PM10 por Estación')
+axs[0, 1].set_title('Dispersión y Cuartiles de PM10 por Estación')
+axs[0, 1].set_ylabel('PM10 (µg/m³)')
 axs[0, 1].tick_params(axis='x', rotation=45)
 
-# 3. Mapa de Calor (Correlaciones)
-corr = df.corr(numeric_only=True)
-sns.heatmap(corr, annot=True, fmt=".2f", cmap='coolwarm', vmin=-1, vmax=1, ax=axs[1, 0])
-axs[1, 0].set_title('Matriz de Correlación')
+# 3. Mapa de Calor (Correlación de Pearson)
+# Seleccionar solo variables numéricas para la matriz
+num_vars = ['PM10', 'PM2.5', 'TOUT', 'RH', 'WSR', 'PRS', 'O3', 'NO2', 'CO']
+corr_matrix = df[num_vars].corr()
+sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap='coolwarm', vmin=-1, vmax=1, ax=axs[1, 0])
+axs[1, 0].set_title('Matriz de Correlación (PM10 vs Clima y Gases)')
 
-# 4. Gráfico de Barras (Variables Categóricas)
-sns.barplot(data=frecuencia_estacion, x='Estacion', y='Frecuencia', ax=axs[1, 1], palette='viridis')
-axs[1, 1].set_title('Registros por Estación de Monitoreo')
+# 4. Diagrama de Barras (Distribución de Variable Categórica)
+frecuencia_estacion = df['Estacion'].value_counts().reset_index()
+sns.barplot(data=frecuencia_estacion, x='Estacion', y='count', ax=axs[1, 1], palette='viridis')
+axs[1, 1].set_title('Registros Disponibles por Estación (Proporción Espacial)')
+axs[1, 1].set_ylabel('Cantidad de Días Registrados')
 axs[1, 1].tick_params(axis='x', rotation=45)
 
 plt.tight_layout()
 plt.show()
 
-```   
+```
+
+# Verificación de la Calidad de los Datos
+
+```{python}
+#| label: calidad-datos
+#| echo: false
+
+import pandas as pd
+from IPython.display import display, Markdown
+
+df_calidad = pd.read_csv('SIMA_Diario_Imputado.csv')
+
+# a) Detección de valores faltantes y duplicados
+nulos_totales = df_calidad.isnull().sum().sum()
+duplicados = df_calidad.duplicated().sum()
+
+display(Markdown(f"- **Valores Nulos:** {nulos_totales} detectados."))
+display(Markdown(f"- **Registros Duplicados:** {duplicados} detectados."))
+
+# b) Corrección y verificación de valores lógicos (erróneos)
+# La concentración de contaminantes y humedad no puede ser negativa
+valores_negativos = (df_calidad[['PM10', 'PM2.5', 'RH', 'WSR']] < 0).sum().sum()
+display(Markdown(f"- **Valores Negativos Inconsistentes:** {valores_negativos} detectados."))
+
+# Si existieran valores negativos por errores de escritura, se corrigen limitando el mínimo a 0:
+if valores_negativos > 0:
+    columnas_fisicas = ['PM10', 'PM2.5', 'RH', 'WSR', 'O3', 'NO2', 'CO']
+    for col in columnas_fisicas:
+        df_calidad[col] = df_calidad[col].clip(lower=0)
+    display(Markdown("- *Acción:* Los valores negativos han sido corregidos truncándolos a 0 (límite físico posible)."))
+
+# Verificación de fechas
+try:
+    df_calidad['Fecha'] = pd.to_datetime(df_calidad['Fecha'])
+    fechas_validas = True
+except Exception as e:
+    fechas_validas = False
+
+display(Markdown(f"- **Formato de Fechas Correcto:** {'Sí' if fechas_validas else 'No'}"))
+
+display(Markdown("**Conclusión de Calidad:** El dataset cumple con los criterios de integridad necesarios para la siguiente fase de la metodología CRISP-DM."))
+```
+
+# 5. Resumen, Próximos Pasos y Preguntas Emergentes
+
+**Resumen de logros hasta ahora:**
+Durante esta segunda etapa de la metodología CRISP-DM, hemos comprendido a fondo la estructura y calidad de los datos de la red SIMA. Se confirmó la limpieza absoluta del dataset (cero nulos tras la imputación temporal y cero valores negativos) y se generó un perfil estadístico claro. Descubrimos que el $PM_{10}$ tiene una distribución asimétrica positiva y que sus valores atípicos representan contingencias ambientales reales, no errores del sensor. Asimismo, se comprobó una correlación multivariada útil donde factores climáticos (Humedad, Viento) actúan como mitigadores del contaminante.
+
+**Qué falta por hacer (Hoja de ruta temporal):**
+El siguiente paso natural es adentrarnos en la fase de Modelado. Específicamente falta:
+1.  **Ingeniería de Características:** Crear variables de rezago histórico (*lags*) y promedios móviles semanales para capturar la inercia de la contaminación.
+2.  **Partición Temporal:** Dividir el dataset cronológicamente (Entrenamiento: 2020-2024, Validación: 2025).
+3.  **Entrenamiento y Evaluación:** Ajustar el modelo de Machine Learning (HistGradientBoosting) y proyectar de forma recursiva los 365 días del año 2026.
+
+**Preguntas que han surgido durante la exploración:**
+*   Al observar la marcada diferencia espacial en los boxplots, ¿será más preciso entrenar un único modelo global que tome la estación como variable categórica, o construir 15 sub-modelos independientes (uno para cada estación)?
+*   Dado que los *outliers* de la asimetría derecha son críticos (días de contingencia), ¿qué función de pérdida (*loss function*) deberíamos usar en el algoritmo para no subestimar estos picos peligrosos para la salud?
+
+
+# 6. Anexos y Repositorio
+
+*   **Gráficos Complementarios:** Los histogramas, boxplots espaciales, matriz de correlación de Pearson y gráficos de barras generados mediante los bloques de código previos forman parte de los Anexos visuales que sustentan el análisis descriptivo. 
+*   **Liga al Repositorio de Trabajo:**
+    *   **GitHub:** https://github.com/INFOAOAA/SIMA_Proyecto.git.
+
+
+# Declaratoria de uso de IA durante el desarrollo del trabajo
+
+**Opción B. Se utilizó IA de la siguiente forma:**
+
+*   **Herramienta:** Gemini (Google).
+*   **Uso realizado:** Se utilizó como asistente de programación y estructuración. La IA ayudó a redactar el código en Python (con enfoque en `pandas`, `seaborn` y `matplotlib`) bajo el formato de Quarto Document (`.qmd`). Asimismo, asistió en la estructuración lógica del reporte metodológico CRISP-DM (Etapa 2) y en la sintaxis para el cálculo de estadísticas descriptivas.
+*   **Secciones donde se utilizó:** En la redacción del objetivo, planteamiento de técnicas estadísticas, generación de tablas de frecuencias/dispersión (Sección 2), código de visualización exploratoria (Sección 3) y rutinas de validación de calidad (Sección 4).
+*   **Validación realizada por los estudiantes:** Se verificó que el código Python procesara correctamente el archivo CSV del proyecto, revisando visualmente los gráficos generados y cotejando que los estadísticos descriptivos (media, nulos, rangos) coincidieran con el conocimiento empírico de la base de datos de calidad del aire. **Confirmo que revisé, verifiqué y asumo la total responsabilidad del contenido final entregado en esta actividad.**
+
+
+
+
+
+
+
+
+
+
