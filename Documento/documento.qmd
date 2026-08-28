@@ -39,24 +39,25 @@ format:
     include-before-body: titlepage.tex
 ---
 
-# Objetivo del Análisis y Justificación del Alcance
+# Objetivo del análisis y justificación del alcance
 
-**Pregunta de Investigación:**
-¿Cómo interactúan las variables meteorológicas para influir simultáneamente en las concentraciones atípicas de los principales contaminantes criterio ($PM_{10}$, $PM_{2.5}$ y $O_3$) a través de las diferentes estaciones de monitoreo del Área Metropolitana de Monterrey durante el periodo 2020-2025?
+### Pregunta de investigación:
+¿De qué manera influyen las variables del clima en los picos de contaminación ($PM_{10}$, $PM_{2.5}$ y $O_{3}$) dentro de las distintas estaciones de monitoreo del Área Metropolitana de Monterrey entre 2020 y 2025?
 
-**Objetivo General:**
-Desarrollar y validar modelos estadísticos multivariados y de aprendizaje automático que predigan la concentración conjunta de $PM_{10}$, $PM_{2.5}$ y $O_3$ mediante el registro histórico 2020-2025. Esto permitirá identificar los detonantes meteorológicos por zona y dotar al SIMA de una herramienta predictiva integral para contingencias.
+### Objetivo general:
+Crear y validar modelos predictivos utilizando datos históricos de 2020 a 2025 para estimar las concentraciones de PM10, PM2.5 y O3 en conjunto. La idea es identificar qué factores climáticos detonan las contingencias en cada zona y darle al SIMA una herramienta práctica para poder anticiparlas.
 
-Se mantuvo el análisis conjunto porque las partículas suspendidas (PM10 y PM2.5) comparten fuentes de emisión y alta colinealidad, mientras que el ozono (O3) sigue un ciclo fotoquímico radicalmente distinto impulsado por calor y radiación. Integrar esta dualidad climática en un solo sistema aporta un valor superior para la política pública frente a modelos aislados.
+Decidimos mantener el análisis de los contaminantes integrado porque, aunque las partículas ($PM_{10}$ y $PM_{2.5}$) comparten fuentes de emisión y se comportan de forma muy similar, el ozono ($O_{3}$) funciona diferente al depender mucho más del calor y la radiación solar. Juntar ambos comportamientos en un solo sistema resulta mucho más útil para tomar decisiones públicas que si hiciéramos modelos separados.
 
-# Técnicas Estadísticas
+# Técnicas estadísticas
 
-Para dar respuesta al objetivo multi-contaminante y mantener una interpretabilidad total que permita al SIMA traducir los resultados en políticas públicas, se implementarán las siguientes técnicas estadísticas:
+Para cumplir con este objetivo y asegurarnos de que el SIMA pueda interpretar los resultados fácilmente para convertirlos en acciones, utilizaremos las siguientes herramientas:
 
-*   **Estadística Descriptiva y Detección de Valores Atípicos:** Uso de diagramas de caja para perfilar las concentraciones base y aislar estadísticamente los eventos de contingencia ambiental segmentados por estación.
-*   **Análisis de Correlación Multivariada:** Fundamental para entender la sinergia directa entre contaminantes (ej. correlación positiva PM10-PM2.5) y su antagonismo con el clima, manteniendo las variables en sus escalas físicas originales.
-*   **Factor de Inflación de la Varianza (VIF):** Técnica diagnóstica interpretable para detectar y eliminar la multicolinealidad entre variables meteorológicas, garantizando que los modelos posteriores sean estables sin recurrir a la creación de componentes artificiales inescrutables.
-*   **Árboles de Decisión (Random Forest):** Algoritmos de aprendizaje automático explicables que estructuran el pronóstico mediante divisiones lógicas legibles por humanos. Se priorizarán modelos con profundidad controlada para evitar opacidad y asegurar la interpretabilidad de las reglas.
+- Estadística descriptiva y detección de valores atípicos: Usaremos diagramas de caja para entender cuáles son los niveles "normales" de contaminación y aislar los días que realmente representan una contingencia en cada estación.
+
+- Análisis de correlación: Nos ayudará a ver cómo se relacionan los contaminantes entre sí (por ejemplo, la fuerte conexión entre PM10 y PM2.5) y cómo reaccionan a los cambios del clima, trabajando siempre con los datos en sus unidades originales.
+
+- Random Forest (Árboles de decisión): Elegimos este algoritmo porque hace pronósticos basados en reglas lógicas. Limitaremos qué tan complejos se vuelven estos árboles para que no se conviertan en una "caja negra" y siempre podamos explicar de dónde salió la predicción.
 
 ```{python}
 #| label: setup-tecnicas
@@ -72,14 +73,15 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import HistGradientBoostingRegressor
 ```
 
-# Comprensión de los Datos y Descripción de Variables
+# Comprensión de los datos y descripción de variables
 
-Para lograr la predicción de la contaminación, el dataset imputado (`SIMA_Diario_Imputado.csv`) consolida lecturas diarias. 
+Para poder predecir la contaminación, trabajaremos con el archivo SIMA_Diario_Imputado.csv, el cual consolida las lecturas por día.
 
-El archivo `SIMA_Diario_Imputado.csv` es el resultado de consolidar seis archivos de Excel con registros horarios históricos (2020-2025) provenientes de las 15 estaciones de monitoreo del Área Metropolitana de Monterrey. Para transformar esta información bruta en un dataset manejable, los datos se agruparon de manera diaria aplicando un umbral: solo se calcularon y validaron los promedios para aquellos días que contaban con al menos 18 horas de medición efectiva. Finalmente, los vacíos de información generados por fallas en los sensores o días incompletos se trataron mediante técnicas de imputación secuencial respetuosas con el orden cronológico, garantizando una base de datos continua y libre de data leakage para la etapa de modelado predictivo.
+Este archivo lo armamos uniendo seis documentos de Excel que contenían el historial por hora (2020-2025) de las 15 estaciones de monitoreo de Monterrey. Para hacer la información más manejable, sacamos los promedios diarios, pero le pusimos una regla estricta: solo validamos los días que tuvieran al menos 18 horas de mediciones reales. Los huecos de información que quedaron por cualquier motivo los rellenamos respetando el orden cronológico exacto de los días. Así nos aseguramos de tener una base continua sin hacer "trampa" (mezclando información del futuro en el pasado) antes de empezar a modelar. Cabe recalcar que tambien respetamos el comportamiento de cada estación, es decir, no imputamos los datos de una estacion el comportamiento de otra.
 
-**Importancia de la Estación de Monitoreo:**
-La variable `Estacion` es categórica y resulta un eje crítico del modelo. La orografía de la Zona Metropolitana de Monterrey (rodeada de montañas) provoca microclimas y "trampas" de aire; por lo tanto, el comportamiento del $PM_{10}$ en la estación suroeste es estadísticamente distinto al de la estación sur. Ignorar esta variable mezclaría los patrones de dispersión.
+### Por qué es clave la estación de monitoreo
+
+La variable de la estación es una de las piezas más importantes del proyecto. Como Monterrey está rodeado de montañas, se generan distintos microclimas y "trampas" donde el aire se estanca. Esto significa que la contaminación por PM10 en la zona suroeste no se comporta para nada igual que en la zona sur. Si ignoramos de qué estación viene cada dato, terminaríamos revolviendo todo y el modelo no entendería cómo se mueve y dispersa realmente la contaminación en la ciudad.
 
 ### Diccionario de Variables
 
@@ -139,7 +141,7 @@ display(frecuencia_estacion)
 
 # Exploración Visual de los Datos
 
-A continuación, visualizamos el comportamiento de las variables cuantitativas (distribución, asimetría, dispersión espacial y correlación multivariada) y cualitativas, utilizando la base de datos validada.
+A continuación, visualizamos el comportamiento de las variables cuantitativas (distribución, asimetría, dispersión y correlación multivariada) y cualitativas, utilizando la base de datos validada.
 
 ```{python}
 #| label: visualizacion-datos
@@ -231,7 +233,12 @@ display(Markdown(f"- **Formato de Fechas Correcto:** {'Sí' if fechas_validas el
 display(Markdown("**Conclusión de Calidad:** El dataset cumple con los criterios de integridad necesarios para la siguiente fase de la metodología CRISP-DM."))
 ```
 
-# 5. Resumen, Próximos Pasos y Preguntas Emergentes
+# Variables a utilizar en el modelo
+
+
+
+
+# Resumen, Próximos Pasos y Preguntas Emergentes
 
 **Resumen de logros hasta ahora:**
 Durante esta segunda etapa de la metodología CRISP-DM, hemos comprendido a fondo la estructura y calidad de los datos de la red SIMA. Se confirmó la limpieza absoluta del dataset (cero nulos tras la imputación temporal y cero valores negativos) y se generó un perfil estadístico claro. Descubrimos que el $PM_{10}$ tiene una distribución asimétrica positiva y que sus valores atípicos representan contingencias ambientales reales, no errores del sensor. Asimismo, se comprobó una correlación multivariada útil donde factores climáticos (Humedad, Viento) actúan como mitigadores del contaminante.
