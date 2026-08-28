@@ -10,6 +10,7 @@ fecha: "\\today"
 
 format:
   pdf:
+    pdf-engine: pdflatex
     documentclass: article
     fontsize: 11pt
     papersize: letter
@@ -24,6 +25,8 @@ format:
       - style=apa
     include-in-header:
       - text: |
+          \usepackage[T1]{fontenc}
+          \usepackage[utf8]{inputenc}
           \newcommand{\titulo}{Etapa 2}
           \newcommand{\subtitulo}{subtitulo}
           \newcommand{\autor}{Angel Ruben Galindo Alvarez}
@@ -36,24 +39,24 @@ format:
     include-before-body: titlepage.tex
 ---
 
-# 1. Objetivo del Análisis y Justificación del Alcance
+# Objetivo del Análisis y Justificación del Alcance
 
 **Pregunta de Investigación:**
 ¿Cómo interactúan las variables meteorológicas para influir simultáneamente en las concentraciones atípicas de los principales contaminantes criterio ($PM_{10}$, $PM_{2.5}$ y $O_3$) a través de las diferentes estaciones de monitoreo del Área Metropolitana de Monterrey durante el periodo 2020-2025?
 
 **Objetivo General:**
-Desarrollar y validar modelos estadísticos multivariados y de aprendizaje automático que permitan predecir la concentración de $PM_{10}$, $PM_{2.5}$ y $O_3$ utilizando el registro histórico (2020-2025). El propósito es identificar los detonantes meteorológicos de cada contaminante por zonas y proporcionar al SIMA una herramienta predictiva integral para la gestión de contingencias ambientales.
+Desarrollar y validar modelos estadísticos multivariados y de aprendizaje automático que predigan la concentración conjunta de $PM_{10}$, $PM_{2.5}$ y $O_3$ mediante el registro histórico 2020-2025. Esto permitirá identificar los detonantes meteorológicos por zona y dotar al SIMA de una herramienta predictiva integral para contingencias.
 
-**Justificación de mantener el enfoque multi-contaminante:**
-Tras la exploración inicial, se decidió mantener el análisis conjunto de $PM_{10}$, $PM_{2.5}$ y $O_3$ en lugar de reducir el alcance a un solo contaminante. La justificación técnica radica en que las partículas suspendidas ($PM_{10}$ y $PM_{2.5}$) comparten fuentes de emisión y dinámicas de dispersión, presentando alta colinealidad. Por otro lado, el Ozono ($O_3$) sigue un ciclo fotoquímico radicalmente distinto, dependiente de la temperatura y la radiación (picos en verano, a diferencia de las partículas que repuntan en invierno). Un modelo que integre esta dualidad climática aporta un valor analítico superior para la toma de decisiones de política pública frente a modelos aislados.
+Se mantuvo el análisis conjunto porque las partículas suspendidas (PM10 y PM2.5) comparten fuentes de emisión y alta colinealidad, mientras que el ozono (O3) sigue un ciclo fotoquímico radicalmente distinto impulsado por calor y radiación. Integrar esta dualidad climática en un solo sistema aporta un valor superior para la política pública frente a modelos aislados.
 
+# Técnicas Estadísticas
 
-**Técnicas estadísticas para contestar el objetivo (basadas en literatura de calidad del aire y series temporales):**
+Para dar respuesta al objetivo multi-contaminante y mantener una interpretabilidad total que permita al SIMA traducir los resultados en políticas públicas, se implementarán las siguientes técnicas estadísticas:
 
-*   **Prueba de Dickey-Fuller Aumentada (ADF):** Necesaria para comprobar la estacionariedad de la serie temporal del $PM_{10}$ por estación, un supuesto fundamental para asegurar que la media y la varianza no derivan de forma incontrolable antes de aplicar modelos predictivos.
-*   **Análisis de Correlación de Pearson:** Para cuantificar la relación lineal multivariada entre el contaminante objetivo ($PM_{10}$) y las covariables meteorológicas clave (Humedad Relativa, Presión Atmosférica, Velocidad del Viento).
-*   **Análisis Descriptivo de Asimetría y Dispersión:** Cálculo de cuartiles, desviación estándar y detección de atípicos (outliers) segmentados espacialmente por la variable `Estacion`, dado que la orografía de Monterrey genera variaciones severas entre zonas.
-*   **Modelación Predictiva (Gradient Boosting Machine):** Algoritmo de ensamble avanzado para regresión que, alimentado con ingeniería de características (*lags* y medias móviles), permite modelar las relaciones no lineales del clima sin los estrictos supuestos de los modelos ARIMA clásicos.
+*   **Estadística Descriptiva y Detección de Valores Atípicos:** Uso de diagramas de caja para perfilar las concentraciones base y aislar estadísticamente los eventos de contingencia ambiental segmentados por estación.
+*   **Análisis de Correlación Multivariada:** Fundamental para entender la sinergia directa entre contaminantes (ej. correlación positiva PM10-PM2.5) y su antagonismo con el clima, manteniendo las variables en sus escalas físicas originales.
+*   **Factor de Inflación de la Varianza (VIF):** Técnica diagnóstica interpretable para detectar y eliminar la multicolinealidad entre variables meteorológicas, garantizando que los modelos posteriores sean estables sin recurrir a la creación de componentes artificiales inescrutables.
+*   **Árboles de Decisión (Random Forest):** Algoritmos de aprendizaje automático explicables que estructuran el pronóstico mediante divisiones lógicas legibles por humanos. Se priorizarán modelos con profundidad controlada para evitar opacidad y asegurar la interpretabilidad de las reglas.
 
 ```{python}
 #| label: setup-tecnicas
@@ -71,7 +74,9 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 
 # Comprensión de los Datos y Descripción de Variables
 
-Para lograr la predicción espacial y temporal de la contaminación, el dataset imputado (`SIMA_Diario_Imputado.csv`) consolida lecturas diarias. 
+Para lograr la predicción de la contaminación, el dataset imputado (`SIMA_Diario_Imputado.csv`) consolida lecturas diarias. 
+
+El archivo `SIMA_Diario_Imputado.csv` es el resultado de consolidar seis archivos de Excel con registros horarios históricos (2020-2025) provenientes de las 15 estaciones de monitoreo del Área Metropolitana de Monterrey. Para transformar esta información bruta en un dataset manejable, los datos se agruparon de manera diaria aplicando un umbral: solo se calcularon y validaron los promedios para aquellos días que contaban con al menos 18 horas de medición efectiva. Finalmente, los vacíos de información generados por fallas en los sensores o días incompletos se trataron mediante técnicas de imputación secuencial respetuosas con el orden cronológico, garantizando una base de datos continua y libre de data leakage para la etapa de modelado predictivo.
 
 **Importancia de la Estación de Monitoreo:**
 La variable `Estacion` es categórica y resulta un eje crítico del modelo. La orografía de la Zona Metropolitana de Monterrey (rodeada de montañas) provoca microclimas y "trampas" de aire; por lo tanto, el comportamiento del $PM_{10}$ en la estación suroeste es estadísticamente distinto al de la estación sur. Ignorar esta variable mezclaría los patrones de dispersión.
@@ -101,14 +106,14 @@ import pandas as pd
 import numpy as np
 from IPython.display import display, Markdown
 
-# Carga de datos y dimensión
+# 1. Carga de datos y dimensión
 df = pd.read_csv('SIMA_Diario_Imputado.csv')
 filas, columnas = df.shape
-display(Markdown(f"**Dimensión del dataset:** 
-{filas} registros y {columnas} columnas."))
 
-# Medidas estadísticas para variables cuantitativas
-# Tendencia central (media, mediana) y dispersión (std, min, max)
+# F-string corregido en una sola línea
+display(Markdown(f"**Dimensión del dataset:** {filas} registros y {columnas} columnas."))
+
+# 2. Medidas estadísticas para variables cuantitativas
 stats_cuant = df.describe().T
 
 # Calculando Moda, Varianza y Rango manualmente
@@ -130,7 +135,6 @@ frecuencia_estacion = df['Estacion'].value_counts().reset_index()
 frecuencia_estacion.columns = ['Estacion', 'Frecuencia']
 display(Markdown("**Tabla de Frecuencia (Variable Cualitativa - Estación):**"))
 display(frecuencia_estacion)
-
 ```
 
 # Exploración Visual de los Datos
@@ -232,20 +236,19 @@ display(Markdown("**Conclusión de Calidad:** El dataset cumple con los criterio
 **Resumen de logros hasta ahora:**
 Durante esta segunda etapa de la metodología CRISP-DM, hemos comprendido a fondo la estructura y calidad de los datos de la red SIMA. Se confirmó la limpieza absoluta del dataset (cero nulos tras la imputación temporal y cero valores negativos) y se generó un perfil estadístico claro. Descubrimos que el $PM_{10}$ tiene una distribución asimétrica positiva y que sus valores atípicos representan contingencias ambientales reales, no errores del sensor. Asimismo, se comprobó una correlación multivariada útil donde factores climáticos (Humedad, Viento) actúan como mitigadores del contaminante.
 
-**Qué falta por hacer (Hoja de ruta temporal):**
+**Qué falta por hacer:**
 El siguiente paso natural es adentrarnos en la fase de Modelado. Específicamente falta:
 1.  **Ingeniería de Características:** Crear variables de rezago histórico (*lags*) y promedios móviles semanales para capturar la inercia de la contaminación.
 2.  **Partición Temporal:** Dividir el dataset cronológicamente (Entrenamiento: 2020-2024, Validación: 2025).
-3.  **Entrenamiento y Evaluación:** Ajustar el modelo de Machine Learning (HistGradientBoosting) y proyectar de forma recursiva los 365 días del año 2026.
+3.  **Entrenamiento y Evaluación:** Ajustar el modelo de Machine Learning y proyectar los 365 días del año 2026.
 
 **Preguntas que han surgido durante la exploración:**
+
 *   Al observar la marcada diferencia espacial en los boxplots, ¿será más preciso entrenar un único modelo global que tome la estación como variable categórica, o construir 15 sub-modelos independientes (uno para cada estación)?
 *   Dado que los *outliers* de la asimetría derecha son críticos (días de contingencia), ¿qué función de pérdida (*loss function*) deberíamos usar en el algoritmo para no subestimar estos picos peligrosos para la salud?
 
 
 # 6. Anexos y Repositorio
-
-*   **Gráficos Complementarios:** Los histogramas, boxplots espaciales, matriz de correlación de Pearson y gráficos de barras generados mediante los bloques de código previos forman parte de los Anexos visuales que sustentan el análisis descriptivo. 
 *   **Liga al Repositorio de Trabajo:**
     *   **GitHub:** https://github.com/INFOAOAA/SIMA_Proyecto.git.
 
