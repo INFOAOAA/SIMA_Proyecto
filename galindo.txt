@@ -1,6 +1,0 @@
-Mostrarnos su código:
-
-- Gráficas de residuos
-- Prueba anova si se cumplen los supuestos
-- Encontrar discrepancias cruciales entre variables
-
