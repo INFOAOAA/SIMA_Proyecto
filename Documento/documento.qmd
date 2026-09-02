@@ -28,10 +28,10 @@ format:
           \newcommand{\titulo}{Etapa 2}
           \newcommand{\subtitulo}{Conociendo los datos}
           \newcommand{\autores}{
-            Angel Ruben Galindo Alvarez & A00228356 \\
-            Jorge Raul Martinez Ramirez & A01286802 \\
-            Roberto Perez Castillo & A01286834 \\
-            Alejandro Torres & A00840943 
+            Angel Ruben Galindo Alvarez \& A00228356 \\
+            Jorge Raul Martinez Ramirez \& A01286802 \\
+            Roberto Perez Castillo \& A01286834 \\
+            Alejandro Torres \& A00840943 
           }
           \newcommand{\curso}{MA2003B Análisis Multivariado}
           \newcommand{\profesor}{Blanca Rosa Ruiz Hernández \\ Raúl Gómez Muñoz}
