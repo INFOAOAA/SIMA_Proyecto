@@ -19,6 +19,7 @@ from sklearn.preprocessing import StandardScaler
 from scipy.cluster.hierarchy import dendrogram, fcluster, linkage
 from sklearn.metrics import calinski_harabasz_score, silhouette_score
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import confusion_matrix
 
 
 def standard_measurements(df: pd.DataFrame):
@@ -125,40 +126,74 @@ def anova_by_stations(df: pd.DataFrame):
     print(summary_df)
     return summary_df
 
-def gaussian_discriminant_per_station(df: pd.DataFrame):
-    cols_to_exclude = ['Estacion', 'Station', 'Fecha y hora', 'Fecha', 'hora', 'Mes', 'Hora']
+def qda_with_confusion_matrix(df: pd.DataFrame):
+    # 1. Clean and Prepare Data
+    cols_to_exclude = [
+        'Estacion', 'Station', 'Fecha y hora', 'Fecha', 'hora', 'Mes', 'Hora'
+    ]
 
-    # Select columns that are floats/ints and NOT in our exclude list
     numeric_vars = [
-        col
-        for col in df.select_dtypes(include=[np.number]).columns
+        col for col in df.select_dtypes(include=[np.number]).columns
         if col not in cols_to_exclude
     ]
-    X = df[numeric_vars].dropna()
-    y = df.loc[X.index, 'Estacion']
 
-    # Scale features
+    # Drop NaNs simultaneously across features and target to prevent misalignment
+    clean_df = df[numeric_vars + ['Estacion']].dropna()
+    
+    X = clean_df[numeric_vars]
+    y = clean_df['Estacion']
+    labels = np.unique(y) # Extracts the sorted names of your stations
+
+    # 2. Scale Features
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    # Split data
+    # 3. Train / Test Split
     X_train, X_test, y_train, y_test = train_test_split(
         X_scaled, y, test_size=0.3, random_state=42
     )
 
-    # Fit QDA model
-    regulation_parameters = np.arange(0,1,0.1)
-    results = []
-    for par in regulation_parameters:
+    # 4. Grid Search for Best Regularization Parameter
+    best_acc = 0
+    best_param = 0.0
+    best_model = None
+
+    print("--- Searching for Optimal Regularization Parameter ---")
+    for par in np.arange(0.0, 0.1, 0.01):
         try:
             qda = QuadraticDiscriminantAnalysis(reg_param=par)
             qda.fit(X_train, y_train)
-            print(f'QDA Classification Accuracy: {qda.score(X_test, y_test):.4f} with {par}')
-
-        except Exception as e:
-            print(f'Regulation parameter {par} no fue posible \nException {e}')
-
+            acc = qda.score(X_test, y_test)
+            print(f'reg_param: {par:.2f} | Accuracy: {acc:.4f}')
             
+            if acc > best_acc:
+                best_acc = acc
+                best_param = par
+                best_model = qda
+        except Exception as e:
+            print(f'reg_param: {par:.2f} | Failed (Collinearity)')
+
+    print(f"\n>> Best Model Selected: reg_param {best_param:.2f} with {best_acc:.4f} accuracy <<")
+
+    # 5. Generate Predictions using the Best Model
+    y_pred = best_model.predict(X_test)
+    
+    # 6. Build and Plot Confusion Matrix
+    cm = confusion_matrix(y_test, y_pred, labels=labels)
+
+    plt.figure(figsize=(12, 10))
+    # cmap='Blues' makes it easy to spot the confused stations (darker = more guesses)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=labels, yticklabels=labels)
+    
+    plt.title('QDA Station Confusion Matrix (Microclimate Clusters)', fontsize=16)
+    plt.xlabel('Predicted Station (What the model guessed)', fontsize=12, fontweight='bold')
+    plt.ylabel('Actual Station (The true location)', fontsize=12, fontweight='bold')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+    return best_model, labels, cm
 
     print(f'QDA Classification Accuracy: {max(results):.4f}')
 
@@ -422,7 +457,7 @@ def visualize_options(data: pd.DataFrame):
             anova_by_stations(df=data)
             visualize_options(data=data)
         case '5': 
-            gaussian_discriminant_per_station(df=data)
+            qda_with_confusion_matrix(df=data)
             visualize_options(data=data)
         case '6':
             linear_discriminant_analysis_per_station(df=data)
@@ -440,7 +475,7 @@ def visualize_options(data: pd.DataFrame):
 
         
 def main():
-    path = os.path.abspath('BasesDeDatosParquet/BD_no_standarization.parquet')
+    path = os.path.abspath('SIMA_Diario_Imputado.parquet')
     data = pd.read_parquet(path=path)
     visualize_options(data=data)
     #standard_measurements(data)    

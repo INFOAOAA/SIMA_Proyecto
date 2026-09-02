@@ -1,0 +1,6 @@
+Clusters no es posible
+
+library(cable)
+
+365 días no es realista
+
