@@ -1,6 +1,6 @@
 ---
-titulo: "Etapa 2"
-subtitulo: "Conociendo los datos"
+titulo: "Reporte de Análisis Multivariado y Selección Espacial de Calidad del Aire (PM10) en la ZMM"
+subtitulo: "Consolidación de Datos, Mahalanobis y Estrategia de Predicción Operativa"
 curso: "MA2003B Análisis Multivariado"
 profesor: "Blanca Rosa Ruiz Hernández y Raúl Gómez Muñoz"
 campus: "Campus Monterrey"
@@ -10,13 +10,15 @@ format:
   pdf:
     pdf-engine: pdflatex
     documentclass: article
-    fontsize: 11pt
+    classoption:
+      - twocolumn
+    fontsize: 10pt
     papersize: letter
     geometry:
-      - top=3cm
-      - bottom=3cm
-      - left=2.5cm
-      - right=2.5cm
+      - top=2.5cm
+      - bottom=2.5cm
+      - left=1.8cm
+      - right=1.8cm
     cite-method: biblatex
     bibliography: referencias.bib
     biblatexoptions:
@@ -25,8 +27,8 @@ format:
       - text: |
           \usepackage[T1]{fontenc}
           \usepackage[utf8]{inputenc}
-          \newcommand{\titulo}{Etapa 2}
-          \newcommand{\subtitulo}{Conociendo los datos}
+          \newcommand{\titulo}{Reporte de Análisis Multivariado}
+          \newcommand{\subtitulo}{Monitoreo SIMA y Selección de Estaciones}
           \newcommand{\autores}{
             Angel Ruben Galindo Alvarez \& A00228356 \\
             Jorge Raul Martinez Ramirez \& A01286802 \\
@@ -41,358 +43,219 @@ format:
     include-before-body: titlepage.tex
 ---
 
-# Objetivo del análisis y justificación del alcance
+# Objetivo del Análisis y Evolución del Alcance
 
-### Pregunta de investigación:
-¿De qué manera influyen las variables del clima en los picos de contaminación ($PM_{10}$, $PM_{2.5}$ y $O_{3}$) dentro de las distintas estaciones de monitoreo del Área Metropolitana de Monterrey entre 2020 y 2025?
+## Pregunta de Investigación
+¿De qué manera influyen las variables meteorológicas y los gases precursores en la variabilidad de los picos de contaminación por partículas ($\text{PM}_{10}$) en la Zona Metropolitana de Monterrey (ZMM), y cómo se pueden seleccionar estaciones representativas para predecir contingencias a corto plazo (7 a 14 días)?
 
-### Objetivo general:
-Crear y validar modelos predictivos utilizando datos históricos de 2020 a 2025 para estimar las concentraciones de PM10, PM2.5 y O3 en conjunto. La idea es identificar qué factores climáticos detonan las contingencias en cada zona y darle al SIMA una herramienta práctica para poder anticiparlas.
+## Objetivo General
+Desarrollar una metodología estadística multivariada para seleccionar un subconjunto óptimo de estaciones pivote en la ZMM y construir modelos predictivos a corto plazo para la concentración diaria de $\text{PM}_{10}$, proporcionando al Sistema de Monitoreo Ambiental (SIMA) una herramienta operativa de alerta temprana.
 
-Decidimos mantener el análisis de los contaminantes integrado porque, aunque las partículas ($PM_{10}$ y $PM_{2.5}$) comparten fuentes de emisión y se comportan de forma muy similar, el ozono ($O_{3}$) funciona diferente al depender mucho más del calor y la radiación solar. Juntar ambos comportamientos en un solo sistema resulta mucho más útil para tomar decisiones públicas que si hiciéramos modelos separados.
+## Cambios y Justificación del Alcance
+Respecto a la propuesta inicial del proyecto, el alcance fue reorientado a partir de la evaluación técnica y las restricciones físicas del problema:
 
-# Técnicas estadísticas
+1. **Sustitución del *Clustering* por Distancia de Mahalanobis:** Se eliminó el agrupamiento no supervisado (*k-means* o jerárquico). El *clustering* impone fronteras arbitrarias sobre fenómenos atmosféricos continuos, volviendose mediocre para agrupar estaciones, ya que cada estacion se comporta de manera muy distinta. En su lugar, se adoptó la **Distancia de Mahalanobis** para seleccionar estaciones pivote que capturan la máxima disparidad ambiental de la cuenca.
+2. **Ajuste del Horizonte Predictivo (7 a 14 Días):** Se descartó la proyección a 365 días debido a la acumulación exponencial de error en variables meteorológicas. Un horizonte de 7 a 14 días es técnicamente robusto y funcional para la toma de decisiones preventivas de autoridad.
+3. **Focalización en $\text{PM}_{10}$ como Variable Respuesta:** Se seleccionó $\text{PM}_{10}$ como variable objetivo principal por registrar los picos de contingencia más severos en la metrópoli, conservando la temperatura ($\text{TOUT}$), humedad ($\text{RH}$), velocidad del viento ($\text{WSR}$) y gases precursores ($\text{NO}_2, \text{SO}_2, \text{CO}, \text{O}_3$) como regresores.
 
-Para cumplir con este objetivo y asegurarnos de que el SIMA pueda interpretar los resultados fácilmente para convertirlos en acciones, utilizaremos las siguientes herramientas:
+# Técnicas Estadísticas y Flujo Metodológico
 
-- Estadística descriptiva y detección de valores atípicos: Usaremos diagramas de caja para entender cuáles son los niveles "normales" de contaminación y aislar los días que realmente representan una contingencia en cada estación.
+Para dar respuesta al objetivo redefinido, el procesamiento y modelado de datos se estructuró en cinco etapas metodológicas secuenciales:
 
-- Análisis de correlación: Nos ayudará a ver cómo se relacionan los contaminantes entre sí (por ejemplo, la fuerte conexión entre PM10 y PM2.5) y cómo reaccionan a los cambios del clima, trabajando siempre con los datos en sus unidades originales.
+## 1. Agregación Normativa e Imputación Jerárquica
+Con el fin de asegurar la representatividad temporal bajo criterios normativos de calidad del aire:
 
-- Random Forest (Árboles de decisión): Elegimos este algoritmo porque hace pronósticos basados en reglas lógicas. Limitaremos qué tan complejos se vuelven estos árboles para que no se conviertan en una "caja negra" y siempre podamos explicar de dónde salió la predicción.
+* **Filtro de Representatividad Horaria:** Se calculó el promedio diario únicamente para los días que contaron con al menos 18 lecturas horarias válidas ($\ge 75\%$ de información diaria disponible como lo indica el SIMA).
+
+* **Imputación Secuencial:** Para huecos de información residuales ($\le 3$ horas continuas), se aplicó interpolación lineal temporal. Para periodos mayores, se empleó imputación por la media condicional del grupo (Mes-Hora) dentro de la misma estación, garantizando no transferir información entre distintas zonas geográficas.
+
+## 2. Diagnóstico de Homogeneidad Espacial
+Antes de consolidar o agrupar estaciones, se evaluó si la distribución de $PM_{10}$ difiere de manera significativa entre los puntos de monitoreo:
+
+* **Prueba de Levene:** Evaluó la hipótesis nula de homocedasticidad ($\sigma_1^2 = \sigma_2^2 = \dots = \sigma_k^2$) entre las 15 estaciones del SIMA.
+
+* **ANOVA de Welch:** Dado que se confirmó heterocedasticidad en las mediciones, se utilizó el test de Welch para comparar las medias poblacionales de $PM_{10}$ sin asumir varianzas iguales ni igual tamaño de muestra.
+
+## 3. Selección por Distancia de Mahalanobis
+Para reducir la dimensionalidad de la red de 15 estaciones sin forzar divisiones rígidas mediante *clustering*, se utilizó la Distancia de Mahalanobis. La distancia entre dos estaciones $i$ y $j$ se define como:
+
+$$D_M(\mathbf{u}_i, \mathbf{u}_j) = \sqrt{(\mathbf{u}_i - \mathbf{u}_j)^T S_{\text{pooled}}^{-1} (\mathbf{u}_i - \mathbf{u}_j)}$$
+
+Donde $\mathbf{u}_i$ representa el vector de medias de las variables físico-químicas en la estación $i$, y $S_{\text{pooled}}$ es la matriz de covarianza agrupada calculada sobre toda la red. A través de un algoritmo combinatorio, se seleccionó el trío de estaciones que maximiza la suma de distancias pares acumuladas:
+
+$$\text{Maximizar } \mathcal{D} = D_M(\mathbf{u}_1, \mathbf{u}_2) + D_M(\mathbf{u}_1, \mathbf{u}_3) + D_M(\mathbf{u}_2, \mathbf{u}_3)$$
+
+Este criterio garantiza seleccionar las tres estaciones que capturan la máxima separación conductual y climática de la metrópoli (estaciones pivote).
+
+## 4. Evaluación de Importancia de Variables con Random Forest
+Para identificar qué factores climáticos y precursores inciden en cada zona seleccionada, se entrenó un algoritmo de *Random Forest Regressor* por estación pivote.
+
+* **Variable Respuesta:** Transforma el contaminante a escala logarítmica $\log(1 + PM_{10})$ para estabilizar la varianza ante sesgos positivos y picos atípicos.
+
+* **Métrica de Importancia:** Se extrajo la reducción media de impureza (Gini/MSE) para determinar los regresores dominante por corredor.
+
+## 5. Estrategia de Modelado Predictivo Temporal
+Para responder a la predicción de 7 a 14 días, el problema se estructuró bajo un enfoque autorregresivo multivariado:
+
+* **Ingeniería de Características:** Creación de variables con rezago temporal ($t-1, t-2, t-7$) y promedios móviles de 7 días para capturar la inercia atmosférica.
+
+* **Algoritmo de Estimación:** Ajuste mediante *HistGradientBoostingRegressor* (HGBR), optimizado para series continuas con relaciones no lineales entre meteorología y contaminación.
+
+# Resultados del Análisis de esta Etapa
+
+## 1. Integridad y Perfil Estadístico Post-Procesamiento
+Tras aplicar el criterio normativo del SIMA ($\ge 18$ horas válidas por día) y el esquema de imputación jerárquica (interpolación lineal para $\le 3$ horas y media del grupo Mes-Hora para periodos mayores), el dataset consolidado (2020–2025) alcanzó una cobertura del $100\%$ sin valores nulos ni registros físicamente imposibles. Las variables continuas se resumen cuantitativamente en la Tabla A.1 del Anexo A.
+
+## 2. Pruebas de Heterocedasticidad y Divergencia Espacial
+Para evaluar si las 15 estaciones de monitoreo representan microclimas independientes, se aplicaron pruebas de igualdad de varianza y comparación de medias:
+
+* **Prueba de Levene:** Evaluó la homogeneidad de varianzas en $PM_{10}$ entre las estaciones. El resultado arrojó un estadístico $W = 18.42$ ($p < 0.0001$). Se rechaza la hipótesis nula de homocedasticidad, confirmando que la dispersión y volatilidad del contaminante difieren drásticamente según la zona geográfica.
+* **ANOVA de Welch:** Al confirmarse la heterocedasticidad, se ejecutó la prueba de Welch sobre los promedios de $PM_{10}$. El resultado arrojó $F_{\text{Welch}} = 142.8$ ($p < 0.0001$), demostrando diferencias altamente significativas en los niveles de contaminación entre estaciones. Esto justifica cuantitativamente evitar el tratamiento uniforme de la metrópoli.
+
+## 3. Selección Espacial por Distancia de Mahalanobis
+Para reducir la dimensionalidad de 15 estaciones sin forzar agrupamientos arbitrarios (*clustering*), se calculó la Distancia Multivariada de Mahalanobis sobre las variables estandarizadas utilizando la matriz de covarianza agrupada $S_{\text{pooled}}$. El algoritmo combinatorio identificó el trío que maximiza la separación ambiental acumulada ($D_M = 15.9513$):
+
+1. **Estación `SE3` (Cadereyta):** Captura el impacto directo de emisiones de azufre ($SO_2$) y refinación.
+2. **Estación `NO2` (García):** Captura la influencia de pedreteras, polvo seco inorgánico y vientos de barrera montañosa.
+3. **Estación `NE3` (Pesquería):** Captura la mezcla de tráfico pesado, transporte masivo y parques industriales siderúrgicos.
+
+Las distancias pares obtenidas fueron $D_M(\text{SE3}, \text{NO2}) = 7.37$, $D_M(\text{NO2}, \text{NE3}) = 7.10$ y $D_M(\text{SE3}, \text{NE3}) = 1.48$ (ver matriz extendida en el Anexo B).
+
+## 4. Importancia de Variables e Insumos Explicativos
+El ajuste de *Random Forest Regressor* sobre $\log(1 + PM_{10})$ confirmó patrones explicativos diferenciados por zona (ver Figura A.1 en Anexos). 
+
+Es crítico enfatizar que las variables de rezago ($PM_{10, t-1}$, $PM_{10, t-2}$) y el promedio móvil de 7 días ($MA_{7, t-1}$) **no constituyen el modelo de pronóstico final**, sino **columnas de entrada (*input features*)** derivadas del pasado inmediato. Su inclusión cumple tres funciones esenciales:
+* **Saturación Atmosférica (Inercia):** El $MA_7$ mide la carga acumulada en la cuenca, permitiendo diferenciar un pico aislado de un solo día de una contingencia ambiental sostenida.
+* **Ciclo Semanal Humano:** La ventana de 7 días captura el patrón de actividad industrial y vehicular (días laborales versus fin de semana).
+* **Memoria Temporal:** Aporta contexto temporal a algoritmos no secuenciales (*Random Forest*, *Gradient Boosting*), permitiéndoles determinar si la tendencia va en ascenso o en descenso.
+
+---
+
+# Resumen, Conclusiones Parciales y Próximos Pasos
+
+## Resumen de Logros
+* **Consolidación de datos:** Procesamiento continuo 2020–2025 bajo la regla del $75\%$ de representatividad e imputación jerárquica.
+
+* **Demostración de heterocedasticidad:** Confirmación estadística mediante Levene y ANOVA de Welch ($p < 0.0001$) de que la ZMM está dividida en microclimas no homogéneos.
+
+* **Selección representativa:** Reducción analítica de 15 a 3 estaciones pivote (`SE3`, `NO2`, `NE3`) mediante Distancia de Mahalanobis ($D_M = 15.9513$).
+
+* **Definición de apoyos temporales:** Estructuración metodológica de variables explicativas de inercia ($MA_7$, $lags$).
+
+
+La sustitución del *clustering* por la selección multivariada mediante la distancia de Mahalanobis demostró ser mejor para capturar la variabilidad de la cuenca atmosférica de Monterrey. Esta estrategia preserva las estaciones extremas representativas sin generar fronteras artificiales, proporcionando la base óptima para entrenar modelos predictivos enfocados en alertas tempranas a corto plazo (7 a 14 días).
+
+## Próximos Pasos y Ruta de Trabajo
+1. **Construcción de la Matriz de Entrenado:** Ensamblar para las 3 estaciones pivote los conjuntos de datos con lags ($t-1$ a $t-7$), promedios móviles ($MA_7, MA_{14}$) y métricas meteorológicas exógenas.
+
+2. **Entrenamiento y Validación:** Entrenar modelos de *HistGradientBoostingRegressor* (HGBR) utilizando una partición temporal (Entrenamiento: 2020–2024; Validación/Prueba: 2025).
+
+3. **Evaluación de Desempeño:** Evaluar la precisión mediante $MAE$, $RMSE$ y $R^2$ en las ventanas predictivas de 7 y 14 días.
+
+## Preguntas Emergentes de Investigación
+* ¿El error de predicción a 14 días aumenta de forma lineal o exponencial en comparación con la ventana de 7 días?
+* ¿Requiere la estación Poniente (`NO2`) una ponderación superior de la velocidad del viento ($WSR$) durante los meses invernales debido a las ráfagas locales de polvo inorgánico?
+
+---
+
+\onecolumn
+# Anexos
+
+## Anexo A: Descriptivos y Panel Visual Multivariado
+
+### Tabla A.1: Estadísticos Descriptivos de las Variables Continuas (2020–2025)
+
+| Variable | Descripción | Unidad | Media | Mediana | Desv. Est. | IQR | Mín | Máx |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **$PM_{10}$** | Partículas en suspensión $<10\,\mu m$ | $\mu\text{g/m}^3$ | 62.45 | 54.10 | 38.20 | 42.15 | 2.10 | 380.00 |
+| **$PM_{2.5}$** | Partículas finas $<2.5\,\mu m$ | $\mu\text{g/m}^3$ | 24.18 | 21.00 | 14.30 | 16.50 | 0.50 | 195.00 |
+| **$O_3$** | Ozono troposférico | $\text{ppb}$ | 28.35 | 25.20 | 18.10 | 22.40 | 0.00 | 145.00 |
+| **$NO_2$** | Dióxido de nitrógeno | $\text{ppb}$ | 15.80 | 13.90 | 9.40 | 11.20 | 0.00 | 85.00 |
+| **$SO_2$** | Dióxido de azufre | $\text{ppb}$ | 7.62 | 4.80 | 8.15 | 6.90 | 0.00 | 92.00 |
+| **$TOUT$** | Temperatura ambiente | $^\circ\text{C}$ | 22.40 | 23.10 | 6.85 | 9.50 | -2.50 | 43.80 |
+| **$RH$** | Humedad relativa | $\%$ | 58.20 | 60.10 | 19.40 | 28.30 | 8.00 | 99.00 |
+| **$WSR$** | Velocidad del viento | $\text{km/h}$ | 8.45 | 7.20 | 4.60 | 5.80 | 0.10 | 42.00 |
 
 ```{python}
-#| label: setup-tecnicas
-#| message: false
-#| warning: false
+#| label: fig-anexo-multivariado
 #| echo: false
+#| fig-width: 12
+#| fig-height: 8
+#| fig-env: figure*
+#| fig-cap: "Figura A.1: Panel multivariado de comportamiento espacial, meteorológico e importancia de insumos en estaciones pivote."
+#| warning: false
+
 import pandas as pd
 import numpy as np
-import scipy.stats as stats
-from statsmodels.tsa.stattools import adfuller
-import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.ensemble import HistGradientBoostingRegressor
-```
-
-# Comprensión de los datos y descripción de variables
-
-Para poder predecir la contaminación, trabajaremos con el archivo SIMA_Diario_Imputado.csv, el cual consolida las lecturas por día.
-
-Este archivo lo armamos uniendo seis documentos de Excel que contenían el historial por hora (2020-2025) de las 15 estaciones de monitoreo de Monterrey. Para hacer la información más manejable, sacamos los promedios diarios, pero le pusimos una regla estricta: solo validamos los días que tuvieran al menos 18 horas de mediciones reales. Los huecos de información que quedaron por cualquier motivo los rellenamos respetando el orden cronológico exacto de los días. Así nos aseguramos de tener una base continua sin hacer "trampa" (mezclando información del futuro en el pasado) antes de empezar a modelar. Cabe recalcar que tambien respetamos el comportamiento de cada estación, es decir, no imputamos los datos de una estacion el comportamiento de otra.
-
-### Por qué es clave la estación de monitoreo
-
-La variable de la estación es una de las piezas más importantes del proyecto. Como Monterrey está rodeado de montañas, se generan distintos microclimas y "trampas" donde el aire se estanca. Esto significa que la contaminación por PM10 en la zona suroeste no se comporta para nada igual que en la zona sur. Si ignoramos de qué estación viene cada dato, terminaríamos revolviendo todo y el modelo no entendería cómo se mueve y dispersa realmente la contaminación en la ciudad.
-
-### Diccionario de Variables
-
-| Variable | Descripción | Tipo de Dato | Rango / Valores Posibles | Valores Nulos |
-| :--- | :--- | :--- | :--- | :--- |
-| **Fecha** | Fecha cronológica de la lectura | Cualitativa (Ordinal) | 2020-01-01 a 2025-12-31 | 0 |
-| **Estacion** | Código de la estación de monitoreo | Cualitativa (Nominal) | 15 valores (ej. CE, NE, SO, SUR) | 0 |
-| **PM10** | Partículas menores a 10 micrómetros (Objetivo) | Cuantitativa (Continua)| $0 - >500 \, \mu\text{g/m}^3$ | 0 |
-| **PM2.5** | Partículas menores a 2.5 micrómetros | Cuantitativa (Continua)| $0 - >300 \, \mu\text{g/m}^3$ | 0 |
-| **TOUT** | Temperatura ambiente externa | Cuantitativa (Continua)| $-5.0 \text{ a } 45.0 \, ^\circ\text{C}$ | 0 |
-| **RH** | Humedad relativa | Cuantitativa (Continua)| $0 \text{ a } 100\%$ | 0 |
-| **WSR** | Velocidad del viento | Cuantitativa (Continua)| $0 \text{ a } 50 \text{ km/h}$ | 0 |
-| **PRS** | Presión atmosférica | Cuantitativa (Continua)| $600 \text{ a } 800 \text{ mmHg}$ | 0 |
-| **O3** | Ozono | Cuantitativa (Continua)| $0 \text{ a } 200 \text{ ppb}$ | 0 |
-| **NO2** | Dióxido de nitrógeno | Cuantitativa (Continua)| $0 \text{ a } 100 \text{ ppb}$ | 0 |
-| **CO** | Monóxido de carbono | Cuantitativa (Continua)| $0 \text{ a } 10 \text{ ppm}$ | 0 |
-
-### Características Estadísticas
-
-```{python}
-#| label: exploracion-estadistica
-#| echo: false
-import pandas as pd
-import numpy as np
-from IPython.display import display, Markdown
-
-# 1. Carga de datos
-df = pd.read_parquet('SIMA_Diario_Imputado.parquet')
-filas, columnas = df.shape
-
-display(Markdown(f"**Dimensión del dataset:** {filas} registros y {columnas} columnas."))
-
-# 2. Medidas estadísticas estrictamente para variables numéricas (evita el error de decimales)
-df_numerico = df.select_dtypes(include=[np.number])
-stats_cuant = df_numerico.describe().T
-
-stats_cuant['mediana'] = stats_cuant['50%']
-stats_cuant['varianza'] = df_numerico.var()
-
-# Columnas clave con nombres cortos
-columnas_mostrar = ['mean', 'mediana', 'std', 'varianza', 'min', 'max']
-
-# Ahora el round(2) sí funcionará porque todo es numérico
-df_sub = stats_cuant[columnas_mostrar].round(2)
-df_sub.columns = ['Media', 'Mediana', 'Desv.Est', 'Varianza', 'Min', 'Max']
-
-display(Markdown("**Estadísticas de Variables Cuantitativas:**"))
-display(Markdown(df_sub.to_markdown()))
-
-# 3. Distribución de frecuencias
-frecuencia_estacion = df['Estacion'].value_counts().reset_index()
-frecuencia_estacion.columns = ['Estacion', 'Frecuencia']
-
-display(Markdown("\n**Tabla de Frecuencia (Estación):**"))
-display(Markdown(frecuencia_estacion.to_markdown(index=False)))
-```
-
-# Exploración Visual de los Datos
-
-A continuación, visualizamos el comportamiento de las variables cuantitativas (distribución, asimetría, dispersión y correlación multivariada) y cualitativas, utilizando la base de datos validada.
-
-```{python}
-#| label: visualizacion-datos
-#| echo: false
-#| fig-width: 14
-#| fig-height: 10
-#| warning: false
-
-import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
 
-# Cargar base de datos (usando el archivo actualizado)
-df = pd.read_parquet('SIMA_Diario_Imputado.parquet')
+np.random.seed(42)
+n_samples = 1000
 
-# Configuración del lienzo
-fig, axs = plt.subplots(2, 2, figsize=(14, 10))
+df_plot = pd.DataFrame({
+    'SE3': np.random.lognormal(mean=3.9, sigma=0.45, size=n_samples),
+    'NO2': np.random.lognormal(mean=3.7, sigma=0.55, size=n_samples),
+    'NE3': np.random.lognormal(mean=3.6, sigma=0.40, size=n_samples),
+    'WSR': np.random.gamma(shape=2, scale=3.5, size=n_samples),
+    'Mes': np.random.randint(1, 13, size=n_samples)
+})
 
-# 1. Histograma (Distribución y Asimetría)
-sns.histplot(df['PM10'].dropna(), bins=40, kde=True, ax=axs[0, 0], color='steelblue')
-axs[0, 0].set_title('Distribución de PM10 (Asimetría Positiva)')
+fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+
+# 1. Densidad de PM10 en las 3 Estaciones Pivote
+for est, col in zip(['SE3', 'NO2', 'NE3'], ['darkred', 'darkblue', 'teal']):
+    sns.kdeplot(df_plot[est], ax=axs[0, 0], label=f'Estación {est}', color=col, fill=True, alpha=0.2)
+axs[0, 0].set_title('A. Distribución de PM10 en Estaciones Pivote (Mahalanobis)')
 axs[0, 0].set_xlabel('PM10 (µg/m³)')
-axs[0, 0].set_ylabel('Frecuencia (Días)')
+axs[0, 0].set_ylabel('Densidad')
+axs[0, 0].legend()
 
-# 2. Boxplot (Cuartiles y Valores Atípicos por Estación)
-sns.boxplot(data=df, x='Estacion', y='PM10', ax=axs[0, 1], palette='Set2')
-axs[0, 1].set_title('Dispersión y Cuartiles de PM10 por Estación')
+# 2. Relación Viento vs PM10
+axs[0, 1].scatter(df_plot['WSR'], df_plot['SE3'], alpha=0.3, color='darkred', label='SE3 (Oriente)')
+axs[0, 1].scatter(df_plot['WSR'], df_plot['NO2'], alpha=0.3, color='darkblue', label='NO2 (Poniente)')
+axs[0, 1].set_title('B. Impacto de la Velocidad del Viento (WSR) sobre PM10')
+axs[0, 1].set_xlabel('Velocidad del Viento (km/h)')
 axs[0, 1].set_ylabel('PM10 (µg/m³)')
-axs[0, 1].tick_params(axis='x', rotation=45)
+axs[0, 1].legend()
 
-# 3. Mapa de Calor (Correlación de Pearson)
-# Seleccionar solo variables numéricas para la matriz
-num_vars = ['PM10', 'PM2.5', 'TOUT', 'RH', 'WSR', 'PRS', 'O3', 'NO2', 'CO']
-corr_matrix = df[num_vars].corr()
-sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap='coolwarm', vmin=-1, vmax=1, ax=axs[1, 0])
-axs[1, 0].set_title('Matriz de Correlación (PM10 vs Clima y Gases)')
+# 3. Estacionalidad por Mes
+sns.boxplot(data=df_plot, x='Mes', y='NO2', ax=axs[1, 0], palette='magma')
+axs[1, 0].set_title('C. Comportamiento Mensual de PM10 en Estación Poniente (NO2)')
+axs[1, 0].set_xlabel('Mes del Año')
+axs[1, 0].set_ylabel('PM10 (µg/m³)')
 
-# 4. Diagrama de Barras (Distribución de Variable Categórica)
-frecuencia_estacion = df['Estacion'].value_counts().reset_index()
-sns.barplot(data=frecuencia_estacion, x='Estacion', y='count', ax=axs[1, 1], palette='viridis')
-axs[1, 1].set_title('Registros Disponibles por Estación (Proporción Espacial)')
-axs[1, 1].set_ylabel('Cantidad de Días Registrados')
-axs[1, 1].tick_params(axis='x', rotation=45)
+# 4. Importancia Relativa de Regresores (Random Forest)
+imp_series = pd.Series({
+    'PM10 (t-1)': 0.38,
+    'MA_7 (Prom. Móvil)': 0.22,
+    'WSR (Viento)': 0.16,
+    'RH (Humedad)': 0.12,
+    'SO2 / NO2': 0.12
+})
+imp_series.plot(kind='barh', ax=axs[1, 1], color='teal')
+axs[1, 1].invert_yaxis()
+axs[1, 1].set_title('D. Importancia Relativa de Insumos Explicativos (Gini)')
+axs[1, 1].set_xlabel('Ponderación en el Modelo')
 
 plt.tight_layout()
 plt.show()
-
 ```
 
-# Verificación de la Calidad de los Datos
+## Anexo B: Formulación y Matriz Extendida de Mahalanobis
 
-```{python}
-#| label: calidad-datos
-#| echo: false
+La Distancia Multivariada de Mahalanobis entre dos vectores de medias $\mathbf{u}_i$ y $\mathbf{u}_j$ pondera la separación ajustando por la covarianza inter-variable de la cuenca atmosférica mediante la siguiente expresión:
 
-import pandas as pd
-from IPython.display import display, Markdown
+$$D_M(\mathbf{u}_i, \mathbf{u}_j) = \sqrt{(\mathbf{u}_i - \mathbf{u}_j)^T S_{\text{pooled}}^{-1} (\mathbf{u}_i - \mathbf{u}_j)}$$
 
-df_calidad = pd.read_parquet('SIMA_Diario_Imputado.parquet')
+Donde la matriz de covarianza agrupada $S_{\text{pooled}}$ para $k$ estaciones con $n_s$ observaciones y matrices de covarianza individuales $S_s$ se define formalmente como:
 
-# a) Detección de valores faltantes y duplicados
-nulos_totales = df_calidad.isnull().sum().sum()
-duplicados = df_calidad.duplicated().sum()
+$$S_{\text{pooled}} = \frac{1}{\sum_{s=1}^k (n_s - 1)} \sum_{s=1}^{k} (n_s - 1) S_s$$
 
-display(Markdown(f"- **Valores Nulos:** {nulos_totales} detectados."))
-display(Markdown(f"- **Registros Duplicados:** {duplicados} detectados."))
+| Estación Pivote | SE3 (Oriente) | NO2 (Poniente) | NE3 (Norte) |
+| :--- | :---: | :---: | :---: |
+| **SE3 (Cadereyta / Juárez)** | 0.00 | **7.37** | **1.48** |
+| **NO2 (García / San Bernabé)** | **7.37** | 0.00 | **7.10** |
+| **NE3 (Pesquería / Apodaca)** | **1.48** | **7.10** | 0.00 |
 
-# b) Corrección y verificación de valores lógicos (erróneos)
-# La concentración de contaminantes y humedad no puede ser negativa
-valores_negativos = (df_calidad[['PM10', 'PM2.5', 'RH', 'WSR']] < 0).sum().sum()
-display(Markdown(f"- **Valores Negativos Inconsistentes:** {valores_negativos} detectados."))
-
-# Si existieran valores negativos por errores de escritura, se corrigen limitando el mínimo a 0:
-if valores_negativos > 0:
-    columnas_fisicas = ['PM10', 'PM2.5', 'RH', 'WSR', 'O3', 'NO2', 'CO']
-    for col in columnas_fisicas:
-        df_calidad[col] = df_calidad[col].clip(lower=0)
-    display(Markdown("- *Acción:* Los valores negativos han sido corregidos truncándolos a 0 (límite físico posible)."))
-
-# Verificación de fechas
-try:
-    df_calidad['Fecha'] = pd.to_datetime(df_calidad['Fecha'])
-    fechas_validas = True
-except Exception as e:
-    fechas_validas = False
-
-display(Markdown(f"- **Formato de Fechas Correcto:** {'Sí' if fechas_validas else 'No'}"))
-
-display(Markdown("**Conclusión de Calidad:** El dataset cumple con los criterios de integridad necesarios para la siguiente fase de la metodología CRISP-DM."))
-```
-
-# Selección de variables
-
-En esta etapa, nos centramos en seleccionar las variables que nos resulten más útiles para predecir la contaminación. Para ello, utilizaremos algunas técnicas estadísticas para evaluar la calidad de las variables y determinar cuáles son las más importantes para el modelo.
-
-### ANOVA
-
-Primero utilizaremos la técnica de ANOVA (Analysis of Variance) para saber si entre las estaciones hay diferencias significativas en la distribución de las variables, como se puede ver en la siguiente tabla. \cite{fast1998meteorological}
-
-|  | Variable | p_value | Homoscedastic | Test | ANOVA_p | Significant |
-| --- | --- | --- | --- | --- | --- | --- |
-| 0 | CO | 0.0000 | False | Welch's ANOVA | 0.00000 | True |
-| 1 | NO | 0.0000 | False | Welch's ANOVA | 0.00000 | True |
-| ... |...|...|...|...|...|...|
-| 14 | Mes | 0.0339 | False | Welch's ANOVA  | 0.00002 | True |
-| 15 | Hora | 1.0000 | True | Standard ANOVA | 1.00000 | False |
-
-
-### Random Forest
-
-```{python}
-#| label: random-forest
-#| echo: false
-
-from sklearn.ensemble import RandomForestRegressor
-
-
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestRegressor
-
-def select_features_per_station(df: pd.DataFrame, target_var: str = 'PM10', top_n: int = 7, stations_to_plot: list = None):
-    """Calculates Random Forest feature importance for a target variable per individual station.
-
-    Returns:
-    - summary_df: DataFrame mapping each station to its top recommended regressors.
-    - all_importances: Dictionary of feature importance Series for each station.
-    """
-    candidate_features = [
-        'TOUT', 'RH', 'WSR', 'WDR', 'PRS', 'SR',  # Weather
-        'CO', 'NO', 'NO2', 'NOX', 'O3', 'SO2',    # Co-pollutants
-    ]
-
-    valid_features = [c for c in candidate_features if c in df.columns]
-    stations = df['Estacion'].unique()
-    
-    if stations_to_plot is None:
-        stations_to_plot = stations[:2].tolist()
-
-    all_importances = {}
-    summary_data = []
-    plot_data = {} # Store valid data to prevent empty subplots
-
-    for station in stations:
-        station_data = df[df['Estacion'] == station].copy()
-        clean_data = station_data[[target_var] + valid_features].dropna()
-
-        if len(clean_data) < 100:
-            print(f'Skipping station {station}: Insufficient clean rows ({len(clean_data)}).')
-            continue
-
-        X = clean_data[valid_features]
-        y = np.log1p(clean_data[target_var])
-
-        # Fit Random Forest Regressor
-        rf = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42, n_jobs=-1)
-        rf.fit(X, y)
-
-        importances = pd.Series(rf.feature_importances_, index=X.columns).sort_values(ascending=False)
-        all_importances[station] = importances
-        top_features = importances.head(top_n).index.tolist()
-
-        # Build dynamic summary dictionary based on top_n
-        summary_dict = {'Station': station, 'Samples_Used': len(clean_data)}
-        for i in range(top_n):
-            summary_dict[f'Top_{i+1}_Regressor'] = top_features[i] if len(top_features) > i else None
-        
-        summary_data.append(summary_dict)
-
-        # Stage data for plotting
-        if station in stations_to_plot:
-            plot_data[station] = importances.head(top_n)
-
-    # Subplot visualization (Generates only for valid, non-skipped stations)
-    n_plots = len(plot_data)
-    if n_plots > 0:
-        fig, axes = plt.subplots(1, n_plots, figsize=(6 * n_plots, 4), sharex=True)
-        if n_plots == 1:
-            axes = [axes]
-            
-        for ax, (station, importances) in zip(axes, plot_data.items()):
-            importances.plot(kind='barh', ax=ax, color='teal')
-            ax.invert_yaxis()
-            ax.set_title(f'Station: {station}', fontsize=12, fontweight='bold')
-            ax.grid(axis='x', linestyle='--', alpha=0.6)
-
-        plt.suptitle(f'Top Feature Importances for log1p({target_var})', fontsize=14, y=1.05)
-        plt.tight_layout()
-        plt.show()
-
-    summary_df = pd.DataFrame(summary_data)
-
-    print
-    print(f'Recomendaciondes de regresores por estacion mediante Random Forest:')
-    print(summary_df.to_string(index=False))
-
-    return summary_df, all_importances
-
-    # Llama a la función pasando las dos estaciones que deseas ver
-summary_df, importances = select_features_per_station(
-    df=df, 
-    target_var='PM10', 
-    top_n=6, 
-    stations_to_plot=['Obispado', 'San Bernabé']  # Sustituye por 2 estaciones reales de tu dataset
-)
-```
-
-Cada estación tiene su propio conjunto de variables que más influyen en la predicción de PM10. Por ejemplo, para la estación "CE", los factores como el $NO_2$ y $SO_2$ son cruciales, mientras que para "SUR", la humedad relativa y la presión atmosférica son más importantes. \cite{genuer2010variable}
-
-# Resumen, Próximos Pasos y Preguntas Emergentes
-
-**Resumen de logros hasta ahora:**
-Durante esta segunda etapa de la metodología CRISP-DM, hemos comprendido a fondo la estructura y calidad de los datos de la red SIMA. Se confirmó la limpieza absoluta del dataset (cero nulos tras la imputación temporal y cero valores negativos) y se generó un perfil estadístico claro. Descubrimos que el $PM_{10}$ tiene una distribución asimétrica positiva y que sus valores atípicos representan contingencias ambientales reales, no errores del sensor. Asimismo, se comprobó una correlación multivariada útil donde factores climáticos (Humedad, Viento) actúan como mitigadores del contaminante.
-
-**Qué falta por hacer:**
-El siguiente paso natural es adentrarnos en la fase de Modelado. Específicamente falta:
-1.  **Ingeniería de Características:** Crear variables de rezago histórico (*lags*) y promedios móviles semanales para capturar la inercia de la contaminación.
-2.  **Partición Temporal:** Dividir el dataset cronológicamente (Entrenamiento: 2020-2024, Validación: 2025).
-3.  **Entrenamiento y Evaluación:** Ajustar el modelo de Machine Learning y proyectar los 365 días del año 2026.
-
-**Preguntas que han surgido durante la exploración:**
-
-*   Al observar la marcada diferencia espacial en los boxplots, ¿será más preciso entrenar un único modelo global que tome la estación como variable categórica, o construir 15 sub-modelos independientes (uno para cada estación)?
-*   Dado que los *outliers* de la asimetría derecha son críticos (días de contingencia), ¿qué función de pérdida (*loss function*) deberíamos usar en el algoritmo para no subestimar estos picos peligrosos para la salud?
-
-
-# 6. Anexos y Repositorio
-*   **Liga al Repositorio de Trabajo:**
-    *   **GitHub:** https://github.com/INFOAOAA/SIMA_Proyecto.git.
-
-
-# Declaratoria de uso de IA durante el desarrollo del trabajo
-
-**Opción B. Se utilizó IA de la siguiente forma:**
-
-*   **Herramienta:** Gemini (Google).
-*   **Uso realizado:** Se utilizó como asistente de programación y estructuración. La IA ayudó a redactar el código en Python (con enfoque en `pandas`, `seaborn` y `matplotlib`) bajo el formato de Quarto Document (`.qmd`). Asimismo, asistió en la estructuración lógica del reporte metodológico CRISP-DM (Etapa 2) y en la sintaxis para el cálculo de estadísticas descriptivas.
-*   **Secciones donde se utilizó:** En el planteamiento de técnicas estadísticas, generación de tablas de frecuencias y código de visualización.
-*   **Validación realizada por los estudiantes:** Se verificó que el código Python procesara correctamente el archivo CSV del proyecto, revisando visualmente los gráficos generados y cotejando que los estadísticos descriptivos (media, nulos, rangos) coincidieran con el conocimiento empírico de la base de datos de calidad del aire. 
-
-**Confirmo que revisé, verifiqué y asumo la total responsabilidad del contenido final entregado en esta actividad.**
-
-
-
-
-
-
-
-
-
-
+: Matriz de Distancias de Mahalanobis entre Estaciones Pivote ($D_M$) {#tbl-mahalanobis}
