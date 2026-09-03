@@ -125,8 +125,11 @@ Las distancias pares obtenidas fueron $D_M(\text{SE3}, \text{NO2}) = 7.37$, $D_M
 El ajuste de *Random Forest Regressor* sobre $\log(1 + PM_{10})$ confirmó patrones explicativos diferenciados por zona (ver Figura A.1 en Anexos). 
 
 Es crítico enfatizar que las variables de rezago ($PM_{10, t-1}$, $PM_{10, t-2}$) y el promedio móvil de 7 días ($MA_{7, t-1}$) **no constituyen el modelo de pronóstico final**, sino **columnas de entrada (*input features*)** derivadas del pasado inmediato. Su inclusión cumple tres funciones esenciales:
-* **Saturación Atmosférica (Inercia):** El $MA_7$ mide la carga acumulada en la cuenca, permitiendo diferenciar un pico aislado de un solo día de una contingencia ambiental sostenida.
-* **Ciclo Semanal Humano:** La ventana de 7 días captura el patrón de actividad industrial y vehicular (días laborales versus fin de semana).
+
+* **Saturación Atmosférica:** El $MA_7$ mide la carga acumulada en la cuenca, permitiendo diferenciar un pico aislado de un solo día de una contingencia ambiental sostenida.
+
+* **Ciclo Semanal:** La ventana de 7 días captura el patrón de actividad industrial y vehicular (días laborales versus fin de semana).
+
 * **Memoria Temporal:** Aporta contexto temporal a algoritmos no secuenciales (*Random Forest*, *Gradient Boosting*), permitiéndoles determinar si la tendencia va en ascenso o en descenso.
 
 ---
