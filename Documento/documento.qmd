@@ -119,19 +119,19 @@ El uso de **Análisis Factorial Exploratorio (AFE)** como paso previo al modelo 
 
 ---
 
-#### 1. Eliminación Radical de la Multicolinealidad
+**1. Eliminación Radical de la Multicolinealidad** 
 * **El Problema:** En estaciones de monitoreo ambiental, los contaminantes ($\text{CO}, \text{NO}_2, \text{SO}_2$) y las variables meteorológicas ($\text{RH}, \text{O}_3, \text{WSR}$) presentan una **correlación cruzada severa**. Introducir todas estas series simultáneamente como covariables exógenas ($X_t$) en un SARIMAX desestabiliza la estimación por Máxima Verosimilitud, inflando los errores estándar de los coeficientes.
 * **La Solución por AFE:** La rotación ortogonal (*Quartimax*) garantiza que los tres factores resultantes (`Combustion`, `Photochemical`, `Moisture`) sean **matemáticamente independientes entre sí ($r = 0$)**. Esto permite aislar el impacto de cada proceso atmosférico sobre la variable objetivo ($\text{PM}_{10}$) sin interferencia estadística.
 
 ---
 
-#### 2. Condensación de Información y Parsimonia del Modelo
+**2. Condensación de Información y Parsimonia del Modelo** 
 * **El Problema:** Ajustar un modelo SARIMAX con 8 o 9 variables exógenas individuales (más sus rezagos $t-1$) incrementa exponencialmente el número de parámetros a estimar, provocando sobreajuste (*overfitting*) y pérdida de grados de libertad.
 * **La Solución por AFE:** Se reduce la dimensión del problema de 9 variables originales a solo **3 variables latentes sintéticas**, reteniendo más del 65–70% de la varianza explicada del sistema. Un modelo más parsimonioso mejora la capacidad de generalización fuera de muestra (*out-of-sample*).
 
 ---
 
-#### 3. Captura de Mecanismos Físico-Atmosféricos Subyacentes
+**3. Captura de Mecanismos Físico-Atmosféricos Subyacentes**
 En lugar de tratar las variables como mediciones aisladas, las puntuaciones factoriales (*Factor Scores*) representan **fenómenos estructurales del aire**:
 
 * **`Factor_Combustion`:** Actúa como un proxy integrado de la actividad antropogénica (industria + tráfico vehicular).
@@ -140,7 +140,7 @@ En lugar de tratar las variables como mediciones aisladas, las puntuaciones fact
 
 ---
 
-#### Impacto Directo en la Evaluación SARIMAX
+### Impacto Directo en la Evaluación SARIMAX
 
 La incorporación de estos factores (junto con sus rezagos $t-1$) explica directamente el rendimiento
 Para transferir la información al modelo predictivo SARIMAX, las puntuaciones factoriales continuas se calcularon mediante el **método de regresión**:
