@@ -46,17 +46,22 @@ format:
 # Objetivo del Análisis y Evolución del Alcance
 
 ## Pregunta de Investigación
-¿De qué manera influyen las variables meteorológicas y los gases precursores en la variabilidad de los picos de contaminación por partículas ($\text{PM}_{10}$) en la Zona Metropolitana de Monterrey (ZMM), y cómo se pueden seleccionar estaciones representativas para predecir contingencias a corto plazo (7 a 14 días)?
 
-## Objetivo General
-Desarrollar una metodología estadística multivariada para seleccionar un subconjunto óptimo de estaciones pivote en la ZMM y construir modelos predictivos a corto plazo para la concentración diaria de $\text{PM}_{10}$, proporcionando al Sistema de Monitoreo Ambiental (SIMA) una herramienta operativa de alerta temprana.
+¿De qué manera influyen las condiciones meteorológicas y los gases precursores en la variabilidad de las concentraciones diarias de material particulado ($PM_{10}$) en la Zona Metropolitana de Monterrey, y cómo puede optimizarse la selección de estaciones de monitoreo mediante distancia multivariada para construir modelos autorregresivos capaces de predecir contingencias ambientales en horizontes de 7 a 14 días?
+
+## Objetivo Generall
+
+Desarrollar y validar un marco de modelado predictivo multivariado para pronosticar concentraciones diarias de $PM_{10}$ en tres estaciones pivote representativas de la Zona Metropolitana de Monterrey (SE3, NO2, NE3), utilizando la distancia de Mahalanobis para la selección espacial y modelos autorregresivos con variables exógenas para proveer al Sistema de Monitoreo Ambiental (SIMA) una herramienta funcional de alerta temprana a corto plazo.
 
 ## Cambios y Justificación del Alcance
-Respecto a la propuesta inicial del proyecto, el alcance fue reorientado a partir de la evaluación técnica y las restricciones físicas del problema:
 
-1. **Sustitución del *Clustering* por Distancia de Mahalanobis:** Se eliminó el agrupamiento no supervisado (*k-means* o jerárquico). El *clustering* impone fronteras arbitrarias sobre fenómenos atmosféricos continuos, volviendose mediocre para agrupar estaciones, ya que cada estacion se comporta de manera muy distinta. En su lugar, se adoptó la **Distancia de Mahalanobis** para seleccionar estaciones pivote que capturan la máxima disparidad ambiental de la cuenca.
-2. **Ajuste del Horizonte Predictivo (7 a 14 Días):** Se descartó la proyección a 365 días debido a la acumulación exponencial de error en variables meteorológicas. Un horizonte de 7 a 14 días es técnicamente robusto y funcional para la toma de decisiones preventivas de autoridad.
-3. **Focalización en $\text{PM}_{10}$ como Variable Respuesta:** Se seleccionó $\text{PM}_{10}$ como variable objetivo principal por registrar los picos de contingencia más severos en la metrópoli, conservando la temperatura ($\text{TOUT}$), humedad ($\text{RH}$), velocidad del viento ($\text{WSR}$) y gases precursores ($\text{NO}_2, \text{SO}_2, \text{CO}, \text{O}_3$) como regresores.
+El diseño del proyecto se ajustó conforme avanzamos en el análisis de los datos del SIMA y entendimos las limitaciones físicas del problema. En un inicio, la información venía registrada por hora, pero presentaba dos inconvenientes: fallas frecuentes u otras razones por lo que los sensores dejaban huecos de información y variaciones repentinas de muy corta duración (como ráfagas de viento pasajeras) que no reflejan la calidad del aire de todo un día. Por ello, decidimos trabajar con promedios diarios. Siguiendo el criterio del SIMA y la norma de salud NOM-025-SSA1, solo se consideraron válidos los días que contaran con al menos 18 horas de registro (el 75% de la información del día). Los huecos faltantes de menos de tres horas se completaron mediante interpolación lineal por cada estación, mientras que los faltantes más largos se estimaron con la media del mismo mes y hora para esa estación en particular. De esta manera obtuvimos una base de datos continua sin inventar información entre distintas zonas de la ciudad.
+
+El cambio más importante fue descartar el uso de algoritmos de agrupamiento (clustering) como $k$-means. Al hacer las primeras pruebas, notamos que el clustering forzaba a juntar estaciones con comportamientos muy distintos y calculaba un promedio entre ellas. Esto suavizaba los picos de contaminación y borraba los eventos extremos de las zonas más afectadas. Por ejemplo, al promediar la estación de Cadereyta (marcada por dióxido de azufre, $SO_2$) o la de García (marcada por polvo de pedreteras y viento) con estaciones del centro de la ciudad, los valores altos de contaminación desaparecían en el promedio del grupo.
+
+Para resolver esto sin perder información de la red, reemplazamos el clustering por la Distancia de Mahalanobis. Esta métrica mide qué tan distinta es una estación de otra tomando en cuenta todas las variables al mismo tiempo y considerando cómo se relacionan entre sí (a través de la matriz de covarianza de la red). Mediante una evaluación de todas las combinaciones posibles, seleccionamos las tres estaciones que capturan las diferencias más marcadas de la área metropolitana (SE3, NO2 y NE3). Con este método no creamos divisiones forzadas en el mapa y conservamos las estaciones donde se registran los picos más severos.
+
+Finalmente, redujimos el horizonte de pronóstico. La idea original de predecir la contaminación a 365 días no es técnicamente viable porque el clima no se puede pronosticar con precisión a más de dos semanas. Intentar predecir $PM_{10}$ a un año solo terminaría arrojando el promedio histórico de la ciudad, perdiendo la capacidad de avisar sobre una contingencia real. Limitar el pronóstico a ventanas de 7 y 14 días permite utilizar pronósticos del tiempo confiables y le da al SIMA una herramienta funcional para tomar medidas preventivas a tiempo.
 
 # Técnicas Estadísticas y Flujo Metodológico
 
@@ -228,7 +233,7 @@ axs[1, 0].set_title('C. Comportamiento Mensual de PM10 en Estación Poniente (NO
 axs[1, 0].set_xlabel('Mes del Año')
 axs[1, 0].set_ylabel('PM10 (µg/m³)')
 
-# 4. Importancia Relativa de Regresores (Random Forest)
+# 4. Importancia Relativa de Regresores (Random Forest)[label](http://localhost:4252/web/viewer.html?quartoPreviewReqId%3D1788463762286%26quartoPreviewThemeCategory%3Ddark#subsection%2A.8)
 imp_series = pd.Series({
     'PM10 (t-1)': 0.38,
     'MA_7 (Prom. Móvil)': 0.22,
