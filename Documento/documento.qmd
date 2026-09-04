@@ -27,8 +27,8 @@ format:
       - text: |
           \usepackage[T1]{fontenc}
           \usepackage[utf8]{inputenc}
-          \newcommand{\titulo}{Reporte de Análisis Multivariado}
-          \newcommand{\subtitulo}{Monitoreo SIMA y Selección de Estaciones}
+          \newcommand{\titulo}{Etapa 3}
+          \newcommand{\subtitulo}{Adecuación y/o validación del Modelo}
           \newcommand{\autores}{
             Angel Ruben Galindo Alvarez \& A00228356 \\
             Jorge Raul Martinez Ramirez \& A01286802 \\
@@ -89,6 +89,53 @@ El análisis visual confirma los mecanismos físicos de estas tres zonas:
 - Dualidad del Viento: La @fig-efectoviento ilustra cómo el viento funciona como vector de limpieza a velocidades moderadas (reduciendo la concentración base), pero desencadena eventos de resuspensión. Las ráfagas extremas elevan las concentraciones anómalas, particularmente visibles en la dispersión superior de la estación NO2. 
 
 ---
+
+# Modelado Predictivo y Técnicas Multivariadas
+
+## Análisis Factorial
+Para resolver los problemas de multicolinealidad entre los distintos contaminantes y las variables meteorológicas, se aplicó un Análisis Factorial. Esta técnica de interdependencia redujo la dimensionalidad del conjunto original extrayendo tres variables latentes principales: `Factor_Combustion`, `Factor_Photochemical` y `Factor_Moisture`. La creación de estos factores ortogonales permitió capturar la varianza combinada del sistema atmosférico en índices simplificados, garantizando el cumplimiento de los supuestos de no multicolinealidad requeridos para los modelos de regresión posteriores.
+
+## Modelo SARIMAX y Validación de Errores
+Se implementaron modelos de series de tiempo SARIMAX utilizando los factores extraídos como variables exógenas para predecir el comportamiento del $PM_{10}$ @tbl-factors.
+
+* El modelo para la estación NO2 es el más eficiente y apto para predicción operativa, presentando un error porcentual absoluto medio (MAPE) del 15.43% y los errores absolutos más bajos de la red.
+* Las estaciones SE3 y NO2 requirieron un nivel de diferenciación ($d=1$) para estabilizar su media temporal, mientras que NE3 se modeló como un proceso puramente autorregresivo.
+* Todos los modelos capturaron exitosamente un ciclo estacional de 7 días, reflejando la dinámica de la actividad vehicular e industrial de la zona metropolitana a lo largo de la semana.
+
+## Importancia de Variables Exógenas
+Los factores extraídos (`Factor_Combustion`, `Factor_Photochemical`, `Factor_Moisture`) demostraron ser predictores estadísticamente significativos (valor $p < 0.05$, tendiendo a $0.000$) en las tres estaciones. En la estación SE3 (Cadereyta), los coeficientes de regresión muestran que la humedad y la combustión tienen el impacto más fuerte sobre la varianza del $PM_{10}$. En contraste, para la estación NE3 (Pesquería), el factor de combustión domina de forma aislada como la variable explicativa de mayor peso.
+
+## Validación de Supuestos Matemáticos
+* **Estacionariedad:** Validada implícitamente mediante la diferenciación de primer orden en las ecuaciones de NO2 y SE3, logrando que la media de la serie fuera constante en el tiempo.
+* **Normalidad de Residuos:** La prueba de Jarque-Bera arrojó valores de curtosis superiores a 10 para SE3 y NO2. Esto indica que los residuos no se distribuyen de forma normal (son fuertemente leptocúrticos), ya que el modelo lineal subestima los picos anómalos o extremos de contaminación.
+* **Homocedasticidad:** La prueba de Ljung-Box sugiere la presencia de heterocedasticidad temporal; la varianza de los errores cambia, incrementándose drásticamente durante los episodios de muy alta concentración.
+
+# Conclusiones Parciales y Siguientes Pasos
+
+El uso combinado del Análisis Factorial y la Distancia de Mahalanobis permitió aislar eficientemente las dinámicas subyacentes de calidad del aire y seleccionar las tres estaciones con comportamientos más contrastantes (NO2, SE3, NE3), eliminando la redundancia espacial en la red de monitoreo. La implementación de modelos SARIMAX validó que la meteorología, los factores de combustión y la periodicidad semanal son excelentes predictores base de la contaminación (alcanzando un destacable error del 15.43% en la estación NO2). 
+
+Sin embargo, el análisis de residuos indica que las ecuaciones lineales subestiman los episodios extremos de $PM_{10}$, evidenciado por la alta curtosis y la heterocedasticidad de los errores. Para la siguiente fase, el objetivo primario evolucionará para enfocarse en la optimización del modelado de estos eventos extremos. El camino a seguir consistirá en explorar transformaciones logarítmicas en la variable dependiente, o evaluar la integración de algoritmos no lineales (como XGBoost o redes neuronales) en un formato de ensamble para corregir los picos residuales y mejorar el MAPE en las estaciones SE3 y NE3.
+
+## Enlace al Repositorio de Código:
+
+\href{https://github.com/INFOAOAA/SIMA_Proyecto/tree/main/Documento}{Enlace al Repositorio de Código del Documento} 
+
+# Declaratoria de uso de IA:
+
+Opción B. Se utilizó IA especificando:
+
+- Herramienta: Gemini.
+
+- Uso realizado: Evaluación del borrador contra los requisitos de la rúbrica, estructuración del documento al formato QMD (Markdown), y apoyo en la síntesis y redacción de los resultados técnicos (Análisis Factorial, métricas de error de SARIMAX).
+
+- Secciones donde se utilizó: "Modelado Predictivo y Técnicas Multivariadas", "Conclusiones Parciales y Siguientes Pasos", y la configuración general del preámbulo QMD.
+
+- Validación realizada por los estudiantes: Verificamos que todas las interpretaciones estadísticas y métricas correspondieran a las salidas generadas por nuestro código.
+
+- Confirmación: Confirmamos que se revisó, verificó y que se asume la responsabilidad del contenido final entregado.
+
+
+
 
 \onecolumn
 
@@ -199,3 +246,14 @@ Para un análisis visual del comportamiento de los contaminantes y su relación 
 ![Matriz de Correlación](Figura_2_Correlacion.png){#fig-correlacion}
 
 ![Relación Velocidad del Viento (WSR) vs PM10](Figura_3_EfectoViento.png){#fig-efectoviento}
+
+
+### Análisis Factorial {#sec-factors}
+
+| Estación | Modelo SARIMAX | Estacionalidad | MAE ($\mu g/m^3$) | RMSE ($\mu g/m^3$) | MAPE (%) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **NO2** | (1, 1, 2) | (1, 0, 1, 7) | 7.279 | 8.653 | 15.43 |
+| **SE3** | (1, 1, 2) | (1, 0, 1, 7) | 13.373 | 20.123 | 35.38 |
+| **NE3** | (1, 0, 0) | (1, 0, 0, 7) | 10.666 | 12.651 | 40.39 |
+
+: factores extraídos como variables exógenas para predecir el comportamiento del $PM_{10}$ {#tbl-factors}
