@@ -5,6 +5,12 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.stats.diagnostic import acorr_ljungbox
 from pmdarima import auto_arima
 import os
+import warnings
+from statsmodels.tools.sm_exceptions import ConvergenceWarning, ValueWarning
+
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
+warnings.filterwarnings("ignore", category=ValueWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 def compute_smape(y_true, y_pred):
@@ -92,7 +98,7 @@ def evaluate_station_sarimax(
             enforce_stationarity=False,
             enforce_invertibility=False,
         )
-        fit_res = model.fit(disp=False)
+        fit_res = model.fit(disp=False, maxiter=200, method='lbfgs')
         preds = fit_res.forecast(steps=test_horizon, exog=test_X)
 
         # Store predictions for holdout evaluation
@@ -109,7 +115,7 @@ def evaluate_station_sarimax(
     # 5. Fit full dataset to inspect residual diagnostics (Ljung-Box)
     final_model = SARIMAX(
         y, exog=X, order=best_order, seasonal_order=best_seasonal
-    ).fit(disp=False)
+    ).fit(disp=False, maxiter=200, method='lbfgs')
     lb_test = acorr_ljungbox(final_model.resid, lags=[10], return_df=True)
     lb_pvalue = lb_test["lb_pvalue"].values[0]
 
@@ -158,6 +164,12 @@ def main():
 
     # 4. Merge back into a single unified DataFrame
     df = pd.concat([df_wide, df_factors], axis=1).dropna()
+
+# Set explicit daily frequency
+    df = df.asfreq('D')
+
+    # If missing days created NaNs after asfreq, interpolate or drop:
+    df = df.ffill().bfill()
 
     # Verify target columns exist now
     print("Reshaped Columns:", df.columns.tolist())
