@@ -1,0 +1,268 @@
+    python Scripts/SARIMAX_G.py                                                        (SIMA) 
+
+================ Running Model for Station: SE3 ================
+=== Daily Dataset Prepared: 2192 days ===
+Decomposition complete for PM10 (Period = 7 days).
+
+=== Running pmdarima Search (Train Period: 2185 days) ===
+Performing stepwise search to minimize aic
+ ARIMA(2,1,2)(1,0,1)[7] intercept   : AIC=17898.184, Time=8.18 sec
+ ARIMA(0,1,0)(0,0,0)[7] intercept   : AIC=18489.347, Time=0.09 sec
+ ARIMA(1,1,0)(1,0,0)[7] intercept   : AIC=18286.094, Time=3.40 sec
+ ARIMA(0,1,1)(0,0,1)[7] intercept   : AIC=18140.057, Time=3.32 sec
+ ARIMA(0,1,0)(0,0,0)[7]             : AIC=18487.348, Time=0.69 sec
+ ARIMA(2,1,2)(0,0,1)[7] intercept   : AIC=17920.205, Time=7.12 sec
+ ARIMA(2,1,2)(1,0,0)[7] intercept   : AIC=17920.054, Time=6.28 sec
+ ARIMA(2,1,2)(0,0,0)[7] intercept   : AIC=17918.861, Time=3.69 sec
+ ARIMA(1,1,2)(1,0,1)[7] intercept   : AIC=17896.981, Time=7.21 sec
+ ARIMA(1,1,2)(0,0,1)[7] intercept   : AIC=17911.618, Time=6.55 sec
+ ARIMA(1,1,2)(1,0,0)[7] intercept   : AIC=17911.258, Time=5.30 sec
+ ARIMA(1,1,2)(0,0,0)[7] intercept   : AIC=17910.326, Time=3.54 sec
+ ARIMA(0,1,2)(1,0,1)[7] intercept   : AIC=17997.202, Time=6.90 sec
+ ARIMA(1,1,1)(1,0,1)[7] intercept   : AIC=17898.508, Time=6.15 sec
+ ARIMA(0,1,1)(1,0,1)[7] intercept   : AIC=18138.135, Time=5.47 sec
+ ARIMA(2,1,1)(1,0,1)[7] intercept   : AIC=inf, Time=6.26 sec
+ ARIMA(1,1,2)(1,0,1)[7]             : AIC=inf, Time=7.10 sec
+
+Best model:  ARIMA(1,1,2)(1,0,1)[7] intercept
+Total fit time: 87.323 seconds
+
+✅ Optimal SARIMAX Order: (1, 1, 2)
+✅ Optimal Seasonal Order: (1, 0, 1, 7)
+
+==================================================================
+       OUT-OF-SAMPLE EVALUATION (7 DAYS HOLDOUT)        
+==================================================================
+MAE:  13.373 µg/m³
+RMSE: 20.123 µg/m³
+MAPE: 35.38%
+
+=== Fitting Final Production Model on Full Dataset ===
+
+==================================================================
+     FINAL SARIMAX DAILY MODEL REPORT (SE3 - PM10)   
+==================================================================
+                                      SARIMAX Results                                      
+===========================================================================================
+Dep. Variable:                                PM10   No. Observations:                 2192
+Model:             SARIMAX(1, 1, 2)x(1, 0, [1], 7)   Log Likelihood               -8930.812
+Date:                             Thu, 03 Sep 2026   AIC                          17879.624
+Time:                                     22:09:57   BIC                          17930.812
+Sample:                                 01-01-2020   HQIC                         17898.337
+                                      - 12-31-2025                                         
+Covariance Type:                               opg                                         
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Factor_Combustion       23.5784      0.850     27.746      0.000      21.913      25.244
+Factor_Photochemical    11.0019      0.454     24.227      0.000      10.112      11.892
+Factor_Moisture         21.6725      0.430     50.449      0.000      20.831      22.515
+ar.L1                    0.6229      0.029     21.749      0.000       0.567       0.679
+ma.L1                   -1.1451      0.034    -33.588      0.000      -1.212      -1.078
+ma.L2                    0.1627      0.032      5.145      0.000       0.101       0.225
+ar.S.L7                  0.8950      0.042     21.523      0.000       0.814       0.977
+ma.S.L7                 -0.8397      0.050    -16.682      0.000      -0.938      -0.741
+sigma2                 209.6429      3.351     62.555      0.000     203.074     216.211
+===================================================================================
+Ljung-Box (L1) (Q):                   0.00   Jarque-Bera (JB):              4952.39
+Prob(Q):                              0.99   Prob(JB):                         0.00
+Heteroskedasticity (H):               1.53   Skew:                             1.08
+Prob(H) (two-sided):                  0.00   Kurtosis:                        10.06
+===================================================================================
+
+Warnings:
+[1] Covariance matrix calculated using the outer product of gradients (complex-step).
+
+✅ Model saved to /home/mrcomputer/Documents/SIMA_Proyecto/Scripts/../models/SE3_sarimax_PM10.pickle
+
+================ Running Model for Station: NO2 ================
+=== Daily Dataset Prepared: 2192 days ===
+Decomposition complete for PM10 (Period = 7 days).
+
+=== Running pmdarima Search (Train Period: 2185 days) ===
+Performing stepwise search to minimize aic
+ ARIMA(2,1,2)(1,0,1)[7] intercept   : AIC=inf, Time=7.54 sec
+ ARIMA(0,1,0)(0,0,0)[7] intercept   : AIC=18507.418, Time=0.09 sec
+ ARIMA(1,1,0)(1,0,0)[7] intercept   : AIC=18263.957, Time=3.45 sec
+ ARIMA(0,1,1)(0,0,1)[7] intercept   : AIC=18068.827, Time=3.28 sec
+ ARIMA(0,1,0)(0,0,0)[7]             : AIC=18505.418, Time=0.61 sec
+ ARIMA(0,1,1)(0,0,0)[7] intercept   : AIC=18074.057, Time=1.27 sec
+ ARIMA(0,1,1)(1,0,1)[7] intercept   : AIC=inf, Time=5.44 sec
+ ARIMA(0,1,1)(1,0,0)[7] intercept   : AIC=18067.817, Time=2.70 sec
+ ARIMA(0,1,0)(1,0,0)[7] intercept   : AIC=18483.587, Time=1.26 sec
+ ARIMA(1,1,1)(1,0,0)[7] intercept   : AIC=17890.382, Time=4.74 sec
+ ARIMA(1,1,1)(0,0,0)[7] intercept   : AIC=17912.407, Time=1.96 sec
+ ARIMA(1,1,1)(1,0,1)[7] intercept   : AIC=inf, Time=5.84 sec
+ ARIMA(1,1,1)(0,0,1)[7] intercept   : AIC=17892.244, Time=5.19 sec
+ ARIMA(2,1,1)(1,0,0)[7] intercept   : AIC=17888.356, Time=5.42 sec
+ ARIMA(2,1,1)(0,0,0)[7] intercept   : AIC=17912.751, Time=3.06 sec
+ ARIMA(2,1,1)(1,0,1)[7] intercept   : AIC=inf, Time=7.08 sec
+ ARIMA(2,1,1)(0,0,1)[7] intercept   : AIC=17890.683, Time=5.61 sec
+ ARIMA(2,1,0)(1,0,0)[7] intercept   : AIC=18160.067, Time=3.89 sec
+ ARIMA(2,1,2)(1,0,0)[7] intercept   : AIC=17889.806, Time=7.00 sec
+ ARIMA(1,1,2)(1,0,0)[7] intercept   : AIC=17887.671, Time=5.23 sec
+ ARIMA(1,1,2)(0,0,0)[7] intercept   : AIC=17912.655, Time=2.57 sec
+ ARIMA(1,1,2)(1,0,1)[7] intercept   : AIC=17878.685, Time=7.60 sec
+ ARIMA(1,1,2)(0,0,1)[7] intercept   : AIC=17890.160, Time=6.36 sec
+ ARIMA(0,1,2)(1,0,1)[7] intercept   : AIC=inf, Time=6.87 sec
+ ARIMA(1,1,2)(1,0,1)[7]             : AIC=inf, Time=7.51 sec
+
+Best model:  ARIMA(1,1,2)(1,0,1)[7] intercept
+Total fit time: 111.600 seconds
+
+✅ Optimal SARIMAX Order: (1, 1, 2)
+✅ Optimal Seasonal Order: (1, 0, 1, 7)
+
+==================================================================
+       OUT-OF-SAMPLE EVALUATION (7 DAYS HOLDOUT)        
+==================================================================
+MAE:  7.279 µg/m³
+RMSE: 8.653 µg/m³
+MAPE: 15.43%
+
+=== Fitting Final Production Model on Full Dataset ===
+
+==================================================================
+     FINAL SARIMAX DAILY MODEL REPORT (NO2 - PM10)   
+==================================================================
+                                      SARIMAX Results                                      
+===========================================================================================
+Dep. Variable:                                PM10   No. Observations:                 2192
+Model:             SARIMAX(1, 1, 2)x(1, 0, [1], 7)   Log Likelihood               -8913.445
+Date:                             Thu, 03 Sep 2026   AIC                          17844.889
+Time:                                     22:12:21   BIC                          17896.077
+Sample:                                 01-01-2020   HQIC                         17863.602
+                                      - 12-31-2025                                         
+Covariance Type:                               opg                                         
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Factor_Combustion        7.0731      0.778      9.095      0.000       5.549       8.597
+Factor_Photochemical    11.3637      0.467     24.308      0.000      10.447      12.280
+Factor_Moisture         25.0631      0.767     32.696      0.000      23.561      26.565
+ar.L1                    0.5416      0.046     11.771      0.000       0.451       0.632
+ma.L1                   -1.0861      0.051    -21.281      0.000      -1.186      -0.986
+ma.L2                    0.1488      0.043      3.467      0.001       0.065       0.233
+ar.S.L7                  0.9973      0.002    638.854      0.000       0.994       1.000
+ma.S.L7                 -1.0000      2.079     -0.481      0.631      -5.075       3.075
+sigma2                 203.6014    423.526      0.481      0.631    -626.494    1033.697
+===================================================================================
+Ljung-Box (L1) (Q):                   0.01   Jarque-Bera (JB):              9069.93
+Prob(Q):                              0.91   Prob(JB):                         0.00
+Heteroskedasticity (H):               1.31   Skew:                             1.43
+Prob(H) (two-sided):                  0.00   Kurtosis:                        12.57
+===================================================================================
+
+Warnings:
+[1] Covariance matrix calculated using the outer product of gradients (complex-step).
+
+✅ Model saved to /home/mrcomputer/Documents/SIMA_Proyecto/Scripts/../models/NO2_sarimax_PM10.pickle
+
+================ Running Model for Station: NE3 ================
+=== Daily Dataset Prepared: 1826 days ===
+Decomposition complete for PM10 (Period = 7 days).
+
+=== Running pmdarima Search (Train Period: 1819 days) ===
+Performing stepwise search to minimize aic
+ ARIMA(2,0,2)(1,0,1)[7] intercept   : AIC=inf, Time=6.36 sec
+ ARIMA(0,0,0)(0,0,0)[7] intercept   : AIC=15539.352, Time=0.41 sec
+ ARIMA(1,0,0)(1,0,0)[7] intercept   : AIC=14971.627, Time=3.46 sec
+ ARIMA(0,0,1)(0,0,1)[7] intercept   : AIC=15088.111, Time=3.94 sec
+ ARIMA(0,0,0)(0,0,0)[7]             : AIC=18315.601, Time=0.37 sec
+ ARIMA(1,0,0)(0,0,0)[7] intercept   : AIC=14996.523, Time=0.98 sec
+ ARIMA(1,0,0)(1,0,1)[7] intercept   : AIC=inf, Time=3.52 sec
+ ARIMA(1,0,0)(0,0,1)[7] intercept   : AIC=14986.082, Time=3.13 sec
+ ARIMA(0,0,0)(1,0,0)[7] intercept   : AIC=15473.331, Time=3.18 sec
+ ARIMA(2,0,0)(1,0,0)[7] intercept   : AIC=15014.369, Time=4.42 sec
+ ARIMA(1,0,1)(1,0,0)[7] intercept   : AIC=14971.735, Time=3.71 sec
+ ARIMA(0,0,1)(1,0,0)[7] intercept   : AIC=15088.551, Time=3.33 sec
+ ARIMA(2,0,1)(1,0,0)[7] intercept   : AIC=15371.641, Time=4.55 sec
+ ARIMA(1,0,0)(1,0,0)[7]             : AIC=15426.973, Time=2.49 sec
+
+Best model:  ARIMA(1,0,0)(1,0,0)[7] intercept
+Total fit time: 43.885 seconds
+
+✅ Optimal SARIMAX Order: (1, 0, 0)
+✅ Optimal Seasonal Order: (1, 0, 0, 7)
+
+==================================================================
+       OUT-OF-SAMPLE EVALUATION (7 DAYS HOLDOUT)        
+==================================================================
+MAE:  10.666 µg/m³
+RMSE: 12.651 µg/m³
+MAPE: 40.39%
+
+=== Fitting Final Production Model on Full Dataset ===
+
+==================================================================
+     FINAL SARIMAX DAILY MODEL REPORT (NE3 - PM10)   
+==================================================================
+                                     SARIMAX Results                                     
+=========================================================================================
+Dep. Variable:                              PM10   No. Observations:                 1826
+Model:             SARIMAX(1, 0, 0)x(1, 0, 0, 7)   Log Likelihood               -7703.655
+Date:                           Thu, 03 Sep 2026   AIC                          15419.310
+Time:                                   22:13:10   BIC                          15452.343
+Sample:                               01-01-2021   HQIC                         15431.498
+                                    - 12-31-2025                                         
+Covariance Type:                             opg                                         
+========================================================================================
+                           coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Factor_Combustion       25.7941      1.004     25.697      0.000      23.827      27.761
+Factor_Photochemical    11.5231      0.625     18.441      0.000      10.298      12.748
+Factor_Moisture          7.2925      1.835      3.975      0.000       3.696      10.889
+ar.L1                    0.9419      0.005    181.748      0.000       0.932       0.952
+ar.S.L7                  0.1159      0.017      6.910      0.000       0.083       0.149
+sigma2                 280.6219      3.774     74.366      0.000     273.226     288.018
+===================================================================================
+Ljung-Box (L1) (Q):                 149.70   Jarque-Bera (JB):             17365.23
+Prob(Q):                              0.00   Prob(JB):                         0.00
+Heteroskedasticity (H):               0.70   Skew:                             0.14
+Prob(H) (two-sided):                  0.00   Kurtosis:                        18.14
+===================================================================================
+
+Warnings:
+[1] Covariance matrix calculated using the outer product of gradients (complex-step).
+
+✅ Model saved to /home/mrcomputer/Documents/SIMA_Proyecto/Scripts/../models/NE3_sarimax_PM10.pickle
+=== Daily Dataset Prepared: 2192 days ===
+Decomposition complete for PM10 (Period = 7 days).
+
+=== Running pmdarima Search (Train Period: 2185 days) ===
+Performing stepwise search to minimize aic
+ ARIMA(2,1,2)(1,0,1)[7] intercept   : AIC=18423.858, Time=9.46 sec
+ ARIMA(0,1,0)(0,0,0)[7] intercept   : AIC=18965.545, Time=0.12 sec
+ ARIMA(1,1,0)(1,0,0)[7] intercept   : AIC=18811.219, Time=2.94 sec
+ ARIMA(0,1,1)(0,0,1)[7] intercept   : AIC=18655.658, Time=5.77 sec
+ ARIMA(0,1,0)(0,0,0)[7]             : AIC=18963.545, Time=0.92 sec
+ ARIMA(2,1,2)(0,0,1)[7] intercept   : AIC=18421.866, Time=8.28 sec
+ ARIMA(2,1,2)(0,0,0)[7] intercept   : AIC=18419.873, Time=4.31 sec
+ ARIMA(2,1,2)(1,0,0)[7] intercept   : AIC=18421.866, Time=7.15 sec
+ ARIMA(1,1,2)(0,0,0)[7] intercept   : AIC=18420.263, Time=3.96 sec
+ ARIMA(2,1,1)(0,0,0)[7] intercept   : AIC=18420.498, Time=3.15 sec
+ ARIMA(1,1,1)(0,0,0)[7] intercept   : AIC=18419.174, Time=3.25 sec
+ ARIMA(1,1,1)(1,0,0)[7] intercept   : AIC=18421.093, Time=6.24 sec
+ ARIMA(1,1,1)(0,0,1)[7] intercept   : AIC=18421.095, Time=5.68 sec
+ ARIMA(1,1,1)(1,0,1)[7] intercept   : AIC=18422.964, Time=6.75 sec
+ ARIMA(0,1,1)(0,0,0)[7] intercept   : AIC=18656.960, Time=2.10 sec
+ ARIMA(1,1,0)(0,0,0)[7] intercept   : AIC=18809.104, Time=2.56 sec
+ ARIMA(0,1,2)(0,0,0)[7] intercept   : AIC=18478.913, Time=2.02 sec
+ ARIMA(2,1,0)(0,0,0)[7] intercept   : AIC=18681.772, Time=2.26 sec
+ ARIMA(1,1,1)(0,0,0)[7]             : AIC=18417.246, Time=1.92 sec
+ ARIMA(1,1,1)(1,0,0)[7]             : AIC=18419.168, Time=4.00 sec
+ ARIMA(1,1,1)(0,0,1)[7]             : AIC=18419.169, Time=4.54 sec
+ ARIMA(1,1,1)(1,0,1)[7]             : AIC=inf, Time=6.70 sec
+ ARIMA(0,1,1)(0,0,0)[7]             : AIC=18654.961, Time=1.91 sec
+ ARIMA(1,1,0)(0,0,0)[7]             : AIC=18807.105, Time=2.06 sec
+ ARIMA(2,1,1)(0,0,0)[7]             : AIC=18418.580, Time=2.77 sec
+ ARIMA(1,1,2)(0,0,0)[7]             : AIC=18418.350, Time=2.46 sec
+ ARIMA(0,1,2)(0,0,0)[7]             : AIC=18476.919, Time=1.37 sec
+ ARIMA(2,1,0)(0,0,0)[7]             : AIC=18679.774, Time=1.66 sec
+ ARIMA(2,1,2)(0,0,0)[7]             : AIC=18417.938, Time=3.94 sec
+
+Best model:  ARIMA(1,1,1)(0,0,0)[7]          
+Total fit time: 110.294 seconds
+
+✅ Optimal SARIMAX Order: (1, 1, 1)
+✅ Optimal Seasonal Order: (0, 0, 0, 7)
