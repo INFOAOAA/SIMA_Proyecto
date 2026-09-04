@@ -95,6 +95,75 @@ El análisis visual confirma los mecanismos físicos de estas tres zonas:
 ## Análisis Factorial
 Para resolver los problemas de multicolinealidad entre los distintos contaminantes y las variables meteorológicas, se aplicó un Análisis Factorial. Esta técnica de interdependencia redujo la dimensionalidad del conjunto original extrayendo tres variables latentes principales: `Factor_Combustion`, `Factor_Photochemical` y `Factor_Moisture`. La creación de estos factores ortogonales permitió capturar la varianza combinada del sistema atmosférico en índices simplificados, garantizando el cumplimiento de los supuestos de no multicolinealidad requeridos para los modelos de regresión posteriores.
 
+### 1. Filtrado de Adecuación Muestral (Criterio KMO Iterativo)
+
+Antes de la extracción, se evaluó la idoneidad de la matriz de correlaciones mediante el índice de **Kaiser-Meyer-Olkin (KMO)**. Para garantizar la estabilidad del modelo:
+
+* Se implementó una función iterativa que evalúa el KMO global y los coeficientes individuales por variable.
+* En cada iteración, si existían variables con $KMO < 0.60$, el algoritmo eliminó **únicamente la variable con la puntuación más baja**, recalculando la matriz de correlación residual para evitar la eliminación prematura de interacciones complejas.
+* Se removieron variables exógenas con alta unicidad o baja contribución estructural (`PRS`, `TOUT`, `SR`), logrando una matriz final con un KMO global superior al umbral crítico.
+
+---
+
+### 2. Extracción y Rotación Factorial
+
+* **Método de Extracción:** Se utilizó la **Extracción por Ejes Principales (*Principal Axis / PA*)**, la cual estima de forma iterativa las comunalidades en la diagonal de la matriz de correlación sin asumir estricta normalidad multivariada.
+* **Criterio de Selección:** A través del gráfico de sedimentación (*Scree Plot*) y los autovalores de la matriz ($\lambda > 1$), se determinó la retención de **3 factores latentes principales**.
+* **Rotación Ortogonal:** Se aplicó una rotación **Quartimax**, cuyo objetivo matemático es simplificar las filas de la matriz de cargas factoriales ($L$), concentrando la varianza en unas cuantas variables por factor y manteniendo la ortogonalidad (independencia lineal) entre los factores extraídos.
+
+---
+
+### 3. Estimación de Puntuaciones Factoriales (*Factor Scores*)
+
+El uso de **Análisis Factorial Exploratorio (AFE)** como paso previo al modelo SARIMAX responde a tres retos fundamentales en la modelación de series de tiempo ambientales:
+
+---
+
+#### 1. Eliminación Radical de la Multicolinealidad
+* **El Problema:** En estaciones de monitoreo ambiental, los contaminantes ($\text{CO}, \text{NO}_2, \text{SO}_2$) y las variables meteorológicas ($\text{RH}, \text{O}_3, \text{WSR}$) presentan una **correlación cruzada severa**. Introducir todas estas series simultáneamente como covariables exógenas ($X_t$) en un SARIMAX desestabiliza la estimación por Máxima Verosimilitud, inflando los errores estándar de los coeficientes.
+* **La Solución por AFE:** La rotación ortogonal (*Quartimax*) garantiza que los tres factores resultantes (`Combustion`, `Photochemical`, `Moisture`) sean **matemáticamente independientes entre sí ($r = 0$)**. Esto permite aislar el impacto de cada proceso atmosférico sobre la variable objetivo ($\text{PM}_{10}$) sin interferencia estadística.
+
+---
+
+#### 2. Condensación de Información y Parsimonia del Modelo
+* **El Problema:** Ajustar un modelo SARIMAX con 8 o 9 variables exógenas individuales (más sus rezagos $t-1$) incrementa exponencialmente el número de parámetros a estimar, provocando sobreajuste (*overfitting*) y pérdida de grados de libertad.
+* **La Solución por AFE:** Se reduce la dimensión del problema de 9 variables originales a solo **3 variables latentes sintéticas**, reteniendo más del 65–70% de la varianza explicada del sistema. Un modelo más parsimonioso mejora la capacidad de generalización fuera de muestra (*out-of-sample*).
+
+---
+
+#### 3. Captura de Mecanismos Físico-Atmosféricos Subyacentes
+En lugar de tratar las variables como mediciones aisladas, las puntuaciones factoriales (*Factor Scores*) representan **fenómenos estructurales del aire**:
+
+* **`Factor_Combustion`:** Actúa como un proxy integrado de la actividad antropogénica (industria + tráfico vehicular).
+* **`Factor_Photochemical`:** Sintetiza la dinámica de formación de contaminantes secundarios accionados por radiación solar y viento.
+* **`Factor_Moisture`:** Modela el efecto de la humedad ambiental sobre la deposición o suspensión de partículas.
+
+---
+
+#### Impacto Directo en la Evaluación SARIMAX
+
+La incorporación de estos factores (junto con sus rezagos $t-1$) explica directamente el rendimiento
+Para transferir la información al modelo predictivo SARIMAX, las puntuaciones factoriales continuas se calcularon mediante el **método de regresión**:
+
+$$W = R^{-1} L$$
+
+$$\mathbf{F} = \mathbf{Z} \cdot W$$
+
+Donde:
+* $\mathbf{Z}$: Matriz de datos originales estandarizados ($Z = \frac{X - \mu}{\sigma}$).
+* $R^{-1}$: Pseudoinversa de Moore-Penrose de la matriz de correlación de los predictores.
+* $L$: Matriz de cargas factoriales rotadas.
+* $W$: Matriz de pesos factoriales (*factor score weights*).
+* $\mathbf{F}$: Puntuaciones factoriales resultantes (`Factor_Combustion`, `Factor_Photochemical`, `Factor_Moisture`).
+
+---
+
+### Interpretación Físico-Atmosférica de los Factores Extraídos
+
+La estructura de cargas factoriales resultante permitió agrupar las variables originales en tres dimensiones físicas bien definidas @tbl-resultsFac
+
+
+
 ## Modelo SARIMAX y Validación de Errores
 Se implementaron modelos de series de tiempo SARIMAX utilizando los factores extraídos como variables exógenas para predecir el comportamiento del $PM_{10}$ @tbl-factors.
 
@@ -236,6 +305,17 @@ Basado en el análisis espacial, las 3 estaciones más representativas seleccion
 
 : Matriz de Distancia de Mahalanobis por Pares {#tbl-mahalanobis}
 
+## Factores del análisis factoriales
+
+Resultados del análisis
+
+| Factor Latente | Variables Dominantes | Significado Dinámico / Ambiental |
+| :--- | :--- | :--- |
+| **`Factor_Combustion`** | $\text{CO}, \text{NO}, \text{NO}_2, \text{SO}_2, \text{PM}_{2.5}$ | Emisiones primarias derivadas de tráfico vehicular e industria. |
+| **`Factor_Photochemical`** | $\text{O}_3, \text{WSR}, \text{WDR}$ | Reacciones secundarias ligadas a la radiación solar y transporte de viento. |
+| **`Factor_Moisture`** | $\text{RH}$ (Humedad Relativa) | Condiciones de dispersión y humedad ambiental. |
+
+: Factores del análisis factoriales {#tbl-resultsFac}
 
 ## Figuras y Visualizaciones {#sec-figuras}
 
