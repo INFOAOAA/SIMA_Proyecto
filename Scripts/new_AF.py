@@ -106,18 +106,17 @@ def scree_plot(df: pd.DataFrame):
   plt.show()
 
 def factorial_analysis(
-    df: pd.DataFrame, n_factors: int = 3, rotation: str = "quartimax"
+    df: pd.DataFrame, n_factors: int = 3, rotation: str = "varimax"
 ):
   # Clean numeric data (ensure no NaNs)
-  df_clean = df.select_dtypes(include=[np.number]).dropna().copy()
 
-  # 1. Fit Maximum Likelihood Factor Analysis
-  fa_ml = Factor(df_clean, n_factor=n_factors, method="pa")
+  # 1. Fit principal axis Factor Analysis
+  fa_ml = Factor(df, n_factor=n_factors, method="pa")
   res = fa_ml.fit()
 
   # 2. Print full statistical report
   print("==================================================================")
-  print("               MAXIMUM LIKELIHOOD FACTOR ANALYSIS                 ")
+  print("               Main Axis FACTOR ANALYSIS                 ")
   print("==================================================================")
   print(res.summary())
 
@@ -148,7 +147,7 @@ def factorial_analysis(
 
 def export_fa_dataset(
     df: pd.DataFrame,
-    timestamp_col: str = "Fecha",
+    timestamp_col: str = "ds",
     station_col: str = "Estacion",
     target_col: str = "PM10",
 ) -> pd.DataFrame:
@@ -170,7 +169,7 @@ def export_fa_dataset(
   # 3. Fit 3-factor Principal Axis model
   fa = Factor(X, n_factor=3, method="pa")
   res = fa.fit()
-  res.rotate(method="quartimax")
+  res.rotate(method="varimax")  # Apply rotation in-place
 
   # 4. Compute factor scores via standard regression method (Z * R^-1 * L)
   Z = (X - X.mean()) / X.std(ddof=0)
@@ -201,23 +200,25 @@ def export_fa_dataset(
 def main():
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(
-        SCRIPT_DIR, "..", "BasesDeDatosParquet", "SIMA_Diario_Imputado.parquet"
+        SCRIPT_DIR, "..", "BasesDeDatosParquet", "hourly_database.parquet"
     )
 
     df = pd.read_parquet(path=path)
+    df = df[(df['Estacion'] == 'SE3') | (df['Estacion'] == 'NO2') | (df['Estacion'] == 'NE3')]
     dfcopy = df
-    df = df.select_dtypes(include=['float64', 'float32']).copy()
+    df = df.select_dtypes(include=['float64', 'float32','str']).copy()
     df.drop(columns=['Mes', 'Hora', 'PM10', 'NOX'], errors='ignore', inplace=True)
-    selected_columns = kmo(df=df, threshold=0.6)
+    selected_columns = kmo(df=df.select_dtypes(exclude=["str"]), threshold=0.5)
     print(f"""
     Variables seleccionadas 
     {selected_columns}
     """)
+    df += pd.get_dummies(df, columns=["Estacion"])
+    scree_plot(df=df.select_dtypes(exclude=["str"]))
+    factorial_analysis(df = df.select_dtypes(include=[np.number,]).dropna(), n_factors = 4)
+    df = df.drop(columns=['WSR', 'TOUT', 'SR','WDR'])
     scree_plot(df=df)
-    factorial_analysis(df = df,n_factors = 4)
-    df = df.drop(columns=['PRS', 'TOUT', 'SR'])
-    scree_plot(df=df)
-    factorial_analysis(df = df, n_factors = 3)
+    factorial_analysis(df = df.select_dtypes(include=[np.number, bool]).dropna(), n_factors = 3)
     fa = export_fa_dataset(df=dfcopy)
     path = os.path.join(
       SCRIPT_DIR, "..", "BasesDeDatosParquet", "factor_analysisi.parquet"
