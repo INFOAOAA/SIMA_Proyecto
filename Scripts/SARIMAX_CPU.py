@@ -258,7 +258,7 @@ if __name__ == "__main__":
     data_dir = os.path.join(SCRIPT_DIR, "..", "BasesDeDatosParquet")
 
     datasets = [
-        "factor_analysis_NE3_factor_scores.parquet",
+        "factor_analysis_NO2_factor_scores.parquet",
     ]
 
     print(f"\n================ STARTING BATCH PROCESSING ({len(datasets)} DATASETS) ================")

@@ -1,0 +1,4 @@
+station,n_residuals,media,std,min,max,asimetria (skew),curtosis (kurtosis),Durbin-Watson,t-test media=0 (p),Shapiro-Wilk (p),Jarque-Bera (p),ARCH LM (p),Ljung-Box lag 10 (p),Ljung-Box lag 20 (p),Ljung-Box lag 24 (p)
+SE3,2192,0.2986,29.3797,-267.989,1111.2436,24.5328,937.6268,1.6715,0.6342,0.0,0.0,0.0,0.0,0.0,0.0
+NE3,1826,2.7289,16.5341,-113.9228,130.7341,0.1458,18.0738,2.505,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+NO2,2192,-0.1108,14.5762,-61.1413,125.2752,1.3996,12.2395,2.0085,0.7219,0.0,0.0,0.0,0.2681,0.3429,0.3266

@@ -1,0 +1,16 @@
+metrica,valor
+n_residuals,2192.0
+media,-0.1108
+std,14.5762
+min,-61.1413
+max,125.2752
+asimetria (skew),1.3996
+curtosis (kurtosis),12.2395
+Durbin-Watson,2.0085
+t-test media=0 (p),0.7219
+Shapiro-Wilk (p),0.0
+Jarque-Bera (p),0.0
+ARCH LM (p),0.0
+Ljung-Box lag 10 (p),0.2681
+Ljung-Box lag 20 (p),0.3429
+Ljung-Box lag 24 (p),0.3266

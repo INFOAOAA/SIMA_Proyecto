@@ -1,0 +1,20 @@
+================ STARTING BATCH PROCESSING (1 DATASETS) ================
+
+------------------------------------------------------------------
+Processing dataset: factor_analysis_NO2_factor_scores.parquet
+Full Path: /Users/roberto/SIMA_Proyecto-1/Scripts/../BasesDeDatosParquet/factor_analysis_NO2_factor_scores.parquet
+------------------------------------------------------------------
+Dataset cargado: factor_analysis_NO2_factor_scores.parquet
+Estación identificada: NO2
+Variable Objetivo: PM10
+Variables Exógenas (2): ['Factor_1', 'Factor_2']
+
+=== Dataset Horario Preparado: 52594 registros (NO2 - PM10) ===
+🚀 Evaluando 10 combinaciones focalizadas para datos horarios (s=24)...
+✅ Mejor orden SARIMAX: (2, 0, 2)
+✅ Mejor orden estacional: (1, 1, 1, 24)
+✅ Menor AIC: 473107.268
+/opt/anaconda3/envs/hola/lib/python3.14/site-packages/statsmodels/tsa/base/tsa_model.py:480: ValueWarning: A date index has been provided, but it has no associated frequency information and so will be ignored when e.g., forecasting.
+  self._init_dates(dates, freq)
+/opt/anaconda3/envs/hola/lib/python3.14/site-packages/statsmodels/tsa/base/tsa_model.py:480: ValueWarning: A date index has been provided, but it has no associated frequency information and so will be ignored when e.g., forecasting.
+  self._init_dates(dates, freq)
