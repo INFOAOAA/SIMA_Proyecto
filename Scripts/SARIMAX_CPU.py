@@ -27,39 +27,37 @@ GRID_D = [0, 1]
 GRID_D_SEAS = [0, 1]
 
 
-def sarimax_gridsearch(
+# ==============================================================================
+# GRILLA OPTIMIZADA DE 10 COMBINACIONES (Basada en resultados Diarios)
+# ==============================================================================
+REDUCED_GRID = [
+    # (p, d, q, P, D, Q)
+    (2, 0, 2, 1, 1, 1),  # Mejor en NE3 y NO2
+    (2, 0, 1, 0, 1, 1),  # Mejor en SE3
+    (2, 0, 2, 0, 1, 1),  # Híbrido 1
+    (2, 0, 1, 1, 1, 1),  # Híbrido 2
+    (1, 0, 2, 1, 1, 1),  # AR(1) variante
+    (1, 0, 1, 1, 1, 1),  # Parsimonioso completo
+    (2, 0, 0, 1, 1, 1),  # AR(2) puro
+    (2, 0, 2, 1, 1, 0),  # Sin Q estacional
+    (1, 0, 1, 0, 1, 1),  # Benchmark simple
+    (2, 0, 1, 1, 1, 0)   # AR(2) + AR(1)_24
+]
+
+def sarimax_gridsearch_focused(
     y_train: pd.Series,
     X_train: pd.DataFrame = None,
-    seasonal_period: int = 24,
-    max_p: int = GRID_MAX_P,
-    max_q: int = GRID_MAX_Q,
-    max_P: int = GRID_MAX_P_SEAS,
-    max_Q: int = GRID_MAX_Q_SEAS,
-    d_list: list = None,
-    D_list: list = None,
+    seasonal_period: int = 24
 ):
-    """Búsqueda en grilla secuencial en CPU sobre statsmodels SARIMAX (criterio AIC)."""
-    if d_list is None:
-        d_list = GRID_D
-    if D_list is None:
-        D_list = GRID_D_SEAS
-
-    p_vals = list(range(0, max_p + 1))
-    q_vals = list(range(0, max_q + 1))
-    P_vals = list(range(0, max_P + 1))
-    Q_vals = list(range(0, max_Q + 1))
-
-    grid = list(itertools.product(p_vals, d_list, q_vals, P_vals, D_list, Q_vals))
-    num_combos = len(grid)
-    print(f"Evaluando {num_combos} modelos SARIMAX en CPU...")
-
+    print(f"🚀 Evaluando {len(REDUCED_GRID)} combinaciones focalizadas para datos horarios (s={seasonal_period})...")
+    
     best_aic = float("inf")
     best_order = None
     best_seasonal_order = None
 
-    for i, g in enumerate(grid, 1):
-        order_tuple = (int(g[0]), int(g[1]), int(g[2]))
-        seasonal_tuple = (int(g[3]), int(g[4]), int(g[5]), int(seasonal_period))
+    for p, d, q, P, D, Q in REDUCED_GRID:
+        order_tuple = (p, d, q)
+        seasonal_tuple = (P, D, Q, seasonal_period)
 
         try:
             with warnings.catch_warnings():
@@ -72,29 +70,20 @@ def sarimax_gridsearch(
                     enforce_stationarity=True,
                     enforce_invertibility=True,
                 )
-                model_fit = model.fit(disp=False)
+                model_fit = model.fit(disp=False, maxiter=30)
+                
+                if hasattr(model_fit, "aic") and np.isfinite(model_fit.aic):
+                    if model_fit.aic < best_aic:
+                        best_aic = model_fit.aic
+                        best_order = order_tuple
+                        best_seasonal_order = seasonal_tuple
+
         except Exception:
             continue
 
-        if not hasattr(model_fit, "aic") or not np.isfinite(model_fit.aic):
-            continue
-
-        if model_fit.aic < best_aic:
-            best_aic = model_fit.aic
-            best_order = order_tuple
-            best_seasonal_order = seasonal_tuple
-
-        if i % 25 == 0 or i == num_combos:
-            print(f"  ... {i}/{num_combos} combinaciones evaluadas")
-
-    if best_order is None:
-        raise RuntimeError(
-            "Ninguna combinación SARIMAX convergió. Revisa los datos de entrada."
-        )
-
-    print(f"Mejor orden SARIMAX: {best_order}")
-    print(f"Mejor orden estacional: {best_seasonal_order}")
-    print(f"Menor AIC: {best_aic:.3f}")
+    print(f"✅ Mejor orden SARIMAX: {best_order}")
+    print(f"✅ Mejor orden estacional: {best_seasonal_order}")
+    print(f"✅ Menor AIC: {best_aic:.3f}")
 
     return best_order, best_seasonal_order
 
@@ -146,7 +135,7 @@ def fit_and_evaluate_hourly_sarimax(
     X_test = test_df[exog_cols] if exog_cols else None
 
     # 4. Búsqueda de hiperparámetros en CPU
-    best_order, best_seasonal_order = sarimax_gridsearch(
+    best_order, best_seasonal_order = sarimax_gridsearch_focused(
         y_train=y_train,
         X_train=X_train,
         seasonal_period=seasonal_period,
