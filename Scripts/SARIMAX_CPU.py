@@ -26,6 +26,13 @@ GRID_MAX_Q_SEAS = 1
 GRID_D = [0, 1]
 GRID_D_SEAS = [0, 1]
 
+# Máximo de horas recientes usadas para entrenar (evita OOM/lentitud en PC sin GPU).
+# 4380 = 6 meses de datos horarios. Se muestrean para el gridsearch.
+TRAIN_HOURS = 4380
+# Horas muestreadas para la búsqueda del mejor orden (más rápido que entrenar todo).
+GRID_HOURS = 3000
+GRID_MAXITER = 20
+
 
 # ==============================================================================
 # GRILLA OPTIMIZADA DE 10 COMBINACIONES (Basada en resultados Diarios)
@@ -55,7 +62,7 @@ def sarimax_gridsearch_focused(
     best_order = None
     best_seasonal_order = None
 
-    for p, d, q, P, D, Q in REDUCED_GRID:
+    for i, (p, d, q, P, D, Q) in enumerate(REDUCED_GRID, 1):
         order_tuple = (p, d, q)
         seasonal_tuple = (P, D, Q, seasonal_period)
 
@@ -70,16 +77,21 @@ def sarimax_gridsearch_focused(
                     enforce_stationarity=True,
                     enforce_invertibility=True,
                 )
-                model_fit = model.fit(disp=False, maxiter=30)
-                
+                model_fit = model.fit(disp=False, maxiter=GRID_MAXITER)
+
                 if hasattr(model_fit, "aic") and np.isfinite(model_fit.aic):
                     if model_fit.aic < best_aic:
                         best_aic = model_fit.aic
                         best_order = order_tuple
                         best_seasonal_order = seasonal_tuple
+                    status = f"AIC={model_fit.aic:.3f}"
+                else:
+                    status = "AIC no finito"
 
-        except Exception:
-            continue
+        except Exception as e:
+            status = f"falló: {type(e).__name__}"
+
+        print(f"    [{i}/{len(REDUCED_GRID)}] {order_tuple} x {seasonal_tuple}: {status}")
 
     print(f"✅ Mejor orden SARIMAX: {best_order}")
     print(f"✅ Mejor orden estacional: {best_seasonal_order}")
@@ -119,6 +131,12 @@ def fit_and_evaluate_hourly_sarimax(
     y_hourly = df_hourly[target_col]
     X_hourly = df_hourly[exog_cols] if exog_cols else None
 
+    # Usar solo las últimas TRAIN_HOURS horas para limitar costo de cómputo
+    if len(df_hourly) > TRAIN_HOURS:
+        df_hourly = df_hourly.iloc[-TRAIN_HOURS:]
+        y_hourly = df_hourly[target_col]
+        X_hourly = df_hourly[exog_cols] if exog_cols else None
+
     print(f"\n=== Dataset Horario Preparado: {len(y_hourly)} registros ({station} - {target_col}) ===")
 
     # 2. Descomposición de la serie
@@ -134,10 +152,16 @@ def fit_and_evaluate_hourly_sarimax(
     y_test = test_df[target_col]
     X_test = test_df[exog_cols] if exog_cols else None
 
-    # 4. Búsqueda de hiperparámetros en CPU
+    # 4. Búsqueda de hiperparámetros en CPU (sobre muestra reciente para acotar tiempo)
+    grid_y = y_train.iloc[-GRID_HOURS:]
+    grid_X = X_train.iloc[-GRID_HOURS:] if X_train is not None else None
+    print(
+        f"\nBuscando mejor orden sobre las últimas {len(grid_y)} horas "
+        f"(de {len(y_train)} horas de entrenamiento)..."
+    )
     best_order, best_seasonal_order = sarimax_gridsearch_focused(
-        y_train=y_train,
-        X_train=X_train,
+        y_train=grid_y,
+        X_train=grid_X,
         seasonal_period=seasonal_period,
     )
 
