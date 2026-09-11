@@ -139,10 +139,6 @@ def fit_and_evaluate_hourly_sarimax(
         y_train=y_train,
         X_train=X_train,
         seasonal_period=seasonal_period,
-        max_p=GRID_MAX_P,
-        max_q=GRID_MAX_Q,
-        max_P=GRID_MAX_P_SEAS,
-        max_Q=GRID_MAX_Q_SEAS,
     )
 
     # 5. Evaluación fuera de muestra (out-of-sample) con statsmodels
@@ -263,8 +259,6 @@ if __name__ == "__main__":
 
     datasets = [
         "factor_analysis_NE3_factor_scores.parquet",
-        "factor_analysis_NO2_factor_scores.parquet",
-        "factor_analysis_SE3_factor_scores.parquet",
     ]
 
     print(f"\n================ STARTING BATCH PROCESSING ({len(datasets)} DATASETS) ================")
