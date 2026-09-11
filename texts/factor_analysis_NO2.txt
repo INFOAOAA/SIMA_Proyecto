@@ -1,0 +1,187 @@
+======================================================================
+ ANÁLISIS FACTORIAL INDIVIDUAL - ESTACIÓN NO2
+======================================================================
+
+Número de observaciones: 52594
+Variables iniciales: ['CO', 'NO', 'NO2', 'O3', 'PM2.5', 'PRS', 'RH', 'SO2', 'SR', 'TOUT', 'WSR', 'WDR']
+
+--- Selección de variables por KMO (>= 0.5) ---
+
+KMO global: 0.5833
+SR       0.4448
+SO2      0.4602
+CO       0.4643
+PM2.5    0.4710
+NO2      0.4784
+WDR      0.5026
+PRS      0.5094
+RH       0.5971
+TOUT     0.6042
+NO       0.6122
+O3       0.7131
+WSR      0.7809
+  -> Eliminando variable con menor KMO: SR (0.4448)
+
+KMO global: 0.5835
+SO2      0.4605
+CO       0.4638
+PM2.5    0.4718
+NO2      0.4788
+WDR      0.5024
+PRS      0.5089
+RH       0.5974
+TOUT     0.6042
+NO       0.6126
+O3       0.7131
+WSR      0.7809
+  -> Eliminando variable con menor KMO: SO2 (0.4605)
+
+KMO global: 0.6184
+CO       0.4197
+PM2.5    0.4886
+WDR      0.4893
+PRS      0.4980
+NO       0.5434
+NO2      0.5903
+TOUT     0.6019
+RH       0.6782
+O3       0.7152
+WSR      0.8113
+  -> Eliminando variable con menor KMO: CO (0.4197)
+
+KMO global: 0.6614
+PM2.5    0.4300
+WDR      0.4810
+NO       0.5016
+NO2      0.5549
+PRS      0.5573
+TOUT     0.6735
+RH       0.7091
+O3       0.7195
+WSR      0.8046
+  -> Eliminando variable con menor KMO: PM2.5 (0.4300)
+
+KMO global: 0.6853
+WDR     0.4743
+NO      0.5194
+PRS     0.5640
+NO2     0.6125
+TOUT    0.6729
+RH      0.7150
+O3      0.7490
+WSR     0.7991
+  -> Eliminando variable con menor KMO: WDR (0.4743)
+
+KMO global: 0.7010
+NO2     0.5203
+NO      0.5401
+PRS     0.5880
+TOUT    0.6869
+RH      0.7312
+O3      0.7429
+WSR     0.7958
+
+Variables retenidas: ['NO', 'NO2', 'O3', 'PRS', 'RH', 'TOUT', 'WSR']
+
+--- Iteración 1: eliminando 1 variables con uniqueness >= 0.9 ---
+NO      0.970
+NO2     0.877
+O3      0.440
+PRS     0.449
+RH      0.052
+TOUT    0.273
+WSR     0.518
+
+--- Iteración 2: eliminando 1 variables con uniqueness >= 0.9 ---
+NO2     0.960
+O3      0.294
+PRS     0.517
+RH      0.603
+TOUT    0.218
+WSR     0.611
+
+Variables eliminadas por uniqueness >= 0.9: ['NO', 'NO2']
+
+--- Eigenvalues (Matriz de correlación) ---
+Factor 1: 2.5769
+Factor 2: 1.0378  (drop vs anterior: 59.7%)
+Factor 3: 0.5967  (drop vs anterior: 42.5%)
+Factor 4: 0.4428  (drop vs anterior: 25.8%)
+Factor 5: 0.3457  (drop vs anterior: 21.9%)
+
+--- Decisión número de factores (Kaiser >= 1 y caída relativa >= 1%) ---
+Factores seleccionados: 2
+
+--- Resultados del análisis factorial (VARIMAX) ---
+       Factor analysis results
+=====================================
+          Eigenvalues                
+-------------------------------------
+   O3    PRS     RH     TOUT    WSR  
+-------------------------------------
+ 2.1542 0.5955 0.0054 -0.0010 -0.0044
+-------------------------------------
+                                     
+-------------------------------------
+          Communality                
+-------------------------------------
+     O3    PRS     RH    TOUT   WSR  
+-------------------------------------
+   0.6678 0.5215 0.4439 0.7419 0.3745
+-------------------------------------
+                                     
+-------------------------------------
+       Pre-rotated loadings          
+----------------------------------------------------
+                    factor 0                factor 1
+----------------------------------------------------
+O3                    0.7401                  0.3465
+PRS                  -0.5042                  0.5170
+RH                   -0.6244                 -0.2323
+TOUT                  0.7955                 -0.3303
+WSR                   0.5740                  0.2123
+-------------------------------------
+                                     
+-------------------------------------
+     varimax rotated loadings        
+----------------------------------------------------
+                    factor 0                factor 1
+----------------------------------------------------
+O3                    0.7865                 -0.2219
+PRS                  -0.0433                  0.7208
+RH                   -0.6243                  0.2327
+TOUT                  0.3858                 -0.7701
+WSR                   0.5731                 -0.2148
+=====================================
+
+
+--- PUNTAJES FACTORIALES (resumen) ---
+Shape: 52594 obs x 4 factores
+                               ds        PM10    Factor_1    Factor_2
+count                       52594  52594.0000  52594.0000  52594.0000
+mean   2023-01-01 01:58:18.901015     58.9863      0.0000      0.0000
+min           2020-01-01 00:00:00      2.0000     -2.0469     -2.8817
+25%           2021-07-02 05:15:00     36.0000     -0.6817     -0.5790
+50%           2023-01-01 01:30:00     52.0000     -0.1576     -0.1505
+75%           2024-07-02 00:45:00     73.0000      0.5683      0.5084
+max           2025-12-31 23:00:00    763.0000      4.1059      3.5237
+std                           NaN     37.2198      0.8516      0.8528
+
+--- LOADINGS ROTADOS (VARIMAX) ---
+      Factor_1  Factor_2
+O3       0.787    -0.222
+PRS     -0.043     0.721
+RH      -0.624     0.233
+TOUT     0.386    -0.770
+WSR      0.573    -0.215
+
+--- UNIQUENESSES ---
+O3      0.332
+PRS     0.479
+RH      0.556
+TOUT    0.258
+WSR     0.625
+
+--- Interpretación (3 variables con mayor carga por factor) ---
+Factor_1 = Factor_Photochemical: O3 (0.787), RH (-0.624), WSR (0.573)
+Factor_2 = Factor_Temperature: TOUT (-0.770), PRS (0.721), RH (0.233)

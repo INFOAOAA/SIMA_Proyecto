@@ -5,18 +5,10 @@ import matplotlib.pyplot as plt
 from factor_analyzer import calculate_kmo
 from statsmodels.multivariate.factor import Factor
 
-# Fit ML Factor Analysis
+# Fit ML Factor Analysi
 
 
-import pandas as pd
-from factor_analyzer.factor_analyzer import calculate_kmo
-
-
-import pandas as pd
-from factor_analyzer.factor_analyzer import calculate_kmo
-
-
-def kmo(df: pd.DataFrame, threshold: float = 0.5) -> list[str]:
+def kmo(df: pd.DataFrame, threshold: float = 0.6) -> list[str]:
   # Filter float columns and drop non-analytical features upfront
 
 
@@ -108,10 +100,14 @@ def scree_plot(df: pd.DataFrame):
 def factorial_analysis(
     df: pd.DataFrame, n_factors: int = 3, rotation: str = "varimax"
 ):
-  # Clean numeric data (ensure no NaNs)
+  # Clean numeric data (ensure no NaNs) and cast boolean dummies to float
+  df_clean = df.select_dtypes(include=[np.number, bool]).dropna().copy()
+  bool_cols = df_clean.select_dtypes(include=[bool]).columns
+  if len(bool_cols) > 0:
+    df_clean[bool_cols] = df_clean[bool_cols].astype(float)
 
   # 1. Fit principal axis Factor Analysis
-  fa_ml = Factor(df, n_factor=n_factors, method="pa")
+  fa_ml = Factor(df_clean, n_factor=n_factors, method="pa")
   res = fa_ml.fit()
 
   # 2. Print full statistical report
@@ -208,15 +204,15 @@ def main():
     dfcopy = df
     df = df.select_dtypes(include=['float64', 'float32','str']).copy()
     df.drop(columns=['Mes', 'Hora', 'PM10', 'NOX'], errors='ignore', inplace=True)
-    selected_columns = kmo(df=df.select_dtypes(exclude=["str"]), threshold=0.5)
+    selected_columns = kmo(df=df.select_dtypes(exclude=["str"]), threshold=0.6)
     print(f"""
     Variables seleccionadas 
     {selected_columns}
     """)
-    df += pd.get_dummies(df, columns=["Estacion"])
+    df = pd.concat([df, pd.get_dummies(df["Estacion"], prefix="Estacion")], axis=1)
     scree_plot(df=df.select_dtypes(exclude=["str"]))
     factorial_analysis(df = df.select_dtypes(include=[np.number,]).dropna(), n_factors = 4)
-    df = df.drop(columns=['WSR', 'TOUT', 'SR','WDR'])
+    df = df.drop(columns=['SR'])
     scree_plot(df=df)
     factorial_analysis(df = df.select_dtypes(include=[np.number, bool]).dropna(), n_factors = 3)
     fa = export_fa_dataset(df=dfcopy)
