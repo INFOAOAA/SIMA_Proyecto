@@ -1,0 +1,14 @@
+REPORTE SARIMAX ÓPTIMO - ESTACIÓN NE3
+order = (2, 1, 0) | seasonal_order = (0, 1, 1, 24)
+Transformación objetivo: Yeo-Johnson (λ = -0.1040)
+------------------------------------------------------------
+MÉTRICAS HOLDOUT (7 HORAS, escala µg/m³)
+  MAE: 11.357
+  RMSE: 11.930
+  MAPE: 63.543
+------------------------------------------------------------
+PESOS (BETAS) DE LOS REGRESORES (escala Yeo-Johnson)
+Regresor      Beta  Error Est.  p-value  Impacto Abs. (1 DE)  Significativo
+Factor_3  0.326178    0.066222 0.000001             0.248062           True
+Factor_2  0.211084    0.025469 0.000000             0.177100           True
+Factor_1 -0.105712    0.034943 0.002484             0.098996           True
