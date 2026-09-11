@@ -1,0 +1,15 @@
+
+------------------------------------------------------------------
+🔄 Processing dataset: factor_analysis_NE3_factor_scores.parquet
+📍 Full Path: /content/drive/MyDrive/SARIMAX/factor_analysis_NE3_factor_scores.parquet
+------------------------------------------------------------------
+📊 Dataset cargado: factor_analysis_NE3_factor_scores.parquet
+📌 Estación identificada: NE3
+🎯 Variable Objetivo: PM10
+🧪 Variables Exógenas (3): ['Factor_1', 'Factor_2', 'Factor_3']
+
+=== Dataset Diario Preparado: 1826 días (NE3 - PM10) ===
+🚀 Evaluando 144 modelos en GPU para 1819 registros...
+✅ Mejor Orden SARIMAX: (2, 1, 0)
+✅ Mejor Orden Estacional: (0, 0, 0, 7)
+❌ Error processing factor_analysis_NE3_factor_scores.parquet: unsupported format string passed to numpy.ndarray.__format__
