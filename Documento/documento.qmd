@@ -43,9 +43,6 @@ format:
 
 # Resumen
 
-
-# Resumen
-
 El material particulado menor a 10 micrómetros ($PM_{10}$) representa el principal contaminante atmosférico crítico en la Zona Metropolitana de Monterrey (ZMM) (\cite{ramirez2025modeling}), superando de forma recurrente los límites establecidos por la norma NOM-025-SSA1 (\cite{ssa2021nom025}). Este estudio desarrolla un marco predictivo multivariado y autorregresivo de resolución horaria ($s=24$) para proveer al Sistema de Monitoreo Ambiental (SIMA) una herramienta funcional de alerta temprana a corto plazo (horizonte de 7 horas).
 
 El diseño metodológico integra cuatro etapas principales:
@@ -345,7 +342,7 @@ Sin embargo, dado el alcance de este trabajo, el desarrollo y validación de est
 
 \FloatBarrier
 \clearpage
-\onecolumn % Pasa a 1 columna completa para que los Anexos respiren y no colapsen
+\onecolumn
 
 # Anexos {.appendix}
 
