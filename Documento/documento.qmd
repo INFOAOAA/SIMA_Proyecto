@@ -55,13 +55,13 @@ Los resultados en la ventana de evaluación (7 horas) demostraron un muy buen de
 
 # Introducción y Justificación
 
-La Zona Metropolitana de Monterrey (ZMM), consolidada como uno de los centros industriales y urbanos más dinámicos de América Latina, enfrenta un problema estructural de contaminación atmosférica enfocado en el material particulado menor a 10 micrómetros ($PM_{10}$). La topografía de la ZMM, caracterizada por un valle semiárido rodeado por barreras naturales de gran elevación como la Sierra Madre Oriental, el Cerro de las Mitras y el Cerro de la Silla, limita la ventilación natural y favorece la acumulación de contaminantes. Este fenómeno se agudiza durante los meses de invierno debido al incremento en la frecuencia de inversiones térmicas subsidiaras (\cite{gonzalez2011temporal}).
+La contaminación por material particulado menor a 10 micrómetros ($PM_{10}$) en la Zona Metropolitana de Monterrey (ZMM) constituye un desafío ambiental agravado por su orografía. La cuenca semiárida del valle, circunscrita por formaciones de gran elevación como la Sierra Madre Oriental, el Cerro de las Mitras y el Cerro de la Silla, restringe la circulación del aire e intensifica la acumulación de contaminantes, particularmente durante las inversiones térmicas invernales. (\cite{gonzalez2011temporal}).
 
-A la condición geofísica se suma un parque vehicular en constante expansión y una densa actividad industrial (siderúrgica, cementera, química y de generación eléctrica). Las concentraciones diarias de $PM_{10}$ superan sistemáticamente los límites máximos permisibles de la norma NOM-025-SSA1, representando un riesgo directo para la salud pública al asociarse con un incremento en admisiones hospitalarias por enfermedades respiratorias y cardiovasculares (\cite{ceronbreton2021short}).
+Esta condición geográfica interactúa con un parque vehicular creciente y una concentrada base industrial —siderúrgica, cementera, química y energética—. Como consecuencia, las concentraciones diarias de $PM_{10}$ superan de manera recurrente los límites de la norma NOM-025-SSA1, con el consecuente impacto en la salud pública derivado del incremento en ingresos hospitalarios por padecimientos respiratorios y cardiovasculares (\cite{ceronbreton2021short}).
 
-El Sistema de Monitoreo Ambiental (SIMA) opera una red automatizada de 15 estaciones continuas. Sin embargo, los esquemas tradicionales de gestión ambiental suelen operar de forma reactiva, emitiendo alertas cuando las concentraciones ya han rebasado los umbrales normativos. La transición hacia una gestión preventiva requiere la implementación de modelos predictivos capaces de anticipar la dinámica del contaminante con varias horas de antelación.
+Actualmente, la red automatizada de 15 estaciones del Sistema de Monitoreo Ambiental (SIMA) opera bajo un esquema reactivo que emite alertas una vez rebasados los umbrales normativos. Modificar este enfoque hacia una gestión preventiva exige herramientas predictivas con capacidad de anticipación a escala horaria.
 
-La justificación de este trabajo radica en estructurar una metodología analítica transparente, reproducible e interpretable. En lugar de utilizar modelos de caja negra, la integración de la Distancia de Mahalanobis para la selección de sitios de monitoreo, el Análisis Factorial Exploratorio (AFE) para la resolución de la multicolinealidad y la modelación autorregresiva SARIMAX permite al SIMA contar con un sistema de alerta temprana fundamentado estadísticamente para respaldar la toma de decisiones operativas.
+Este trabajo justifica su desarrollo en la necesidad de un marco analítico reproducible e interpretable. En lugar de recurrir a arquitecturas opacas de caja negra, se integra la Distancia de Mahalanobis para la selección espacial de sitios, el Análisis Factorial Exploratorio (AFE) para mitigar la multicolinealidad entre covariables, y la modelación autorregresiva SARIMAX. Con ello, se provee al SIMA de un sistema de alerta temprana fundamentado estadísticamente para respaldar la toma de decisiones operativas.
 
 ## Problemática y Objetivos
 
@@ -91,8 +91,7 @@ La representatividad del modelo se sustenta en la heterogeneidad geográfica de 
 
 ![Ubicación geográfica de las estaciones analizadas del SIMA en la ZMM.](Estaciones.jpg){#fig-mapa-sima width=85% fig-align="center"}
 
-
-
+![Distribución mensual de $PM_{10}$ para el triplete representativo (2020–2025). La elevación de las medianas durante los meses de invierno evidencia el efecto de las inversiones térmicas sobre la acumulación de contaminantes.](Figura_1_Estacionalidad.png){#fig-estacionalidad width=95% fig-align="center"}
 
 # Preparación de Datos y Metodología
 
@@ -129,6 +128,8 @@ El algoritmo identificó como solución óptima al triplete conformado por **NO2
 ## Reducción de Dimensionalidad por Análisis Factorial
 
 Las covariables meteorológicas y de contaminación presentan colinealidad cruzada. Para evitar la desestabilización de las estimaciones en los modelos predictivos, se implementó un Análisis Factorial Exploratorio (AFE) de forma completamente independiente y dedicada para cada una de las tres estaciones seleccionadas.
+
+![Matriz de correlación entre los contaminantes y las variables meteorológicas retenidas ($PM_{10}$, $PM_{2.5}$, $TOUT$, $RH$, $WSR$, $PRS$). La marcada interdependencia entre predictores justifica la reducción de dimensionalidad mediante el AFE.](Figura_2_Correlacion.png){#fig-correlacion width=85% fig-align="center"}
 
 Esta aproximación individualizada responde a que las dinámicas físicas y químicas varían según la ubicación geográfica:
 
@@ -259,6 +260,10 @@ Se evaluó el desempeño predictivo en una ventana de validación fuera de muest
 
 El modelo capturó con alta precisión el ciclo de resuspensión de material particulado. La inclusión del `Factor_1_Photochemical` y el `Factor_2_Temperature` demostró significancia estadística ($p < 0.01$), aportando una reducción del 14% en el RMSE en comparación con un modelo ARIMA puramente univariado. El coeficiente $R^2 = 0.81$ refleja un ajuste sólido ante cambios abruptos en la dirección del viento.
 
+![Relación entre la velocidad del viento (WSR) y $PM_{10}$ con tendencia no lineal (LOWESS) para el triplete. La cola ascendente refleja el fenómeno de resuspensión de polvo inorgánico característico de NO2 (García).](Figura_3_EfectoViento.png){#fig-viento width=88% fig-align="center"}
+
+![Pronóstico fuera de muestra (horizonte de 7 horas) vs valores reales de $PM_{10}$ en la estación NO2 (García).](../texts/regresion_NO2.png){#fig-regresion-no2 width=90% fig-align="center"}
+
 **2. Estación SE3 (Cadereyta - Suroriente)**
 
 Esta estación presentó la mayor varianza residual debido a las emisiones intermitentes de origen industrial. Sin embargo, la inclusión del `Factor_2_Combustion` (dominado por $NO_2$, $NO$ y $PM_{2.5}$) permitió anticipar los picos nocturnos generados por eventos de inversión térmica sobre la cuenca del río San Juan, manteniendo un error medio absoluto (MAE) de 10.32 $\mu\text{g/m}^3$.
@@ -274,6 +279,8 @@ Para validar la solidez estadística de los modelos estimadores, los residuos $\
 * **Prueba de Ljung-Box (Ausencia de Autocorrelación):** Se evaluó la hipótesis nula de independencia de residuos hasta el retardo $k = 48$. Para los tres modelos, los p-valores superaron el umbral de significancia ($p > 0.05$), confirmando que la estructura autorregresiva y estacional ($s=24$) absorbió la dependencia temporal de las series.
 * **Homocedasticidad y Distribución del Error:** Aunque la transformación Yeo-Johnson corrigió la asimetría severa, los residuos mantuvieron colas ligeramente pesadas (leptocurtosis) explicadas por eventos atípicos extremos no planificados. No obstante, la varianza residual permanece estable a lo largo del horizonte predictivo.
 * **Significancia de las Exógenas ($X_t$):** Los p-valores asociados a los coeficientes factoriales ($\gamma_m$) resultaron significativos al 99% de confianza en todas las estaciones, validando la hipótesis de que la integración de la meteorología y contaminantes precursores —libres de colinealidad— mejora el pronóstico frente a series de tiempo aisladas.
+
+![Diagnóstico de los residuos del modelo SARIMAX de la estación NO2 (García): serie temporal, histograma vs normal, Q-Q, ACF, PACF y residuos vs valores ajustados.](../texts/residuales_NO2.png){#fig-residuales-no2 width=90% fig-align="center"}
 
 # Conclusiones y Recomendaciones
 
@@ -337,3 +344,33 @@ kable(tabla_afe, format = "latex", booktabs = TRUE, col.names = c("Estación", "
   collapse_rows(columns = 1, latex_hline = "major") %>%
   kable_styling(latex_options = c("striped", "hold_position", "scale_down"))
 ```
+
+## Pronósticos Fuera de Muestra (SE3 y NE3)
+
+![Pronóstico horario fuera de muestra (horizonte de 7 horas) vs valores reales de $PM_{10}$ en SE3 (Cadereyta).](../texts/regresion_SE3.png){#fig-regresion-se3 width=90% fig-align="center"}
+
+![Pronóstico horario fuera de muestra (horizonte de 7 horas) vs valores reales de $PM_{10}$ en NE3 (Pesquería).](../texts/regresion_NE3.png){#fig-regresion-ne3 width=90% fig-align="center"}
+
+## Diagnóstico de Residuos del Modelo (SE3 y NE3)
+
+![Residuos del modelo SARIMAX de la estación SE3 (Cadereyta): serie temporal, histograma vs normal, Q-Q, ACF, PACF y residuos vs valores ajustados.](../texts/residuales_SE3.png){#fig-residuales-se3 width=90% fig-align="center"}
+
+![Residuos del modelo SARIMAX de la estación NE3 (Pesquería): serie temporal, histograma vs normal, Q-Q, ACF, PACF y residuos vs valores ajustados.](../texts/residuales_NE3.png){#fig-residuales-ne3 width=90% fig-align="center"}
+
+## Análisis Factorial Exploratorio por Estación
+
+![Scree plot de la estación NO2 (García) con el criterio de Kaiser ($\lambda = 1$) y el número de factores retenidos.](../texts/factor_analysis_NO2_scree.png){#fig-scree-no2 width=85% fig-align="center"}
+
+![Scree plot de la estación SE3 (Cadereyta) con el criterio de Kaiser ($\lambda = 1$) y el número de factores retenidos.](../texts/factor_analysis_SE3_scree.png){#fig-scree-se3 width=85% fig-align="center"}
+
+![Scree plot de la estación NE3 (Pesquería) con el criterio de Kaiser ($\lambda = 1$) y el número de factores retenidos.](../texts/factor_analysis_NE3_scree.png){#fig-scree-ne3 width=85% fig-align="center"}
+
+![Diagrama de cargas factoriales de la estación NO2 (García). El grosor de la flecha es proporcional a la carga y el color rojo indica carga negativa.](../texts/factor_analysis_NO2_diagram.png){#fig-diagram-no2 width=90% fig-align="center"}
+
+![Diagrama de cargas factoriales de la estación SE3 (Cadereyta). El grosor de la flecha es proporcional a la carga y el color rojo indica carga negativa.](../texts/factor_analysis_SE3_diagram.png){#fig-diagram-se3 width=90% fig-align="center"}
+
+![Diagrama de cargas factoriales de la estación NE3 (Pesquería). El grosor de la flecha es proporcional a la carga y el color rojo indica carga negativa.](../texts/factor_analysis_NE3_diagram.png){#fig-diagram-ne3 width=90% fig-align="center"}
+
+## Métricas Comparativas de los Modelos
+
+![Comparativa de métricas de error (MAE, RMSE y MAPE) obtenidas en la ventana de validación fuera de muestra (7 horas) para las tres estaciones.](metricas_holdout.png){#fig-metricas-holdout width=90% fig-align="center"}
