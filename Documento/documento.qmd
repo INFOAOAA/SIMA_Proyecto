@@ -345,13 +345,44 @@ Sin embargo, dado el alcance de este trabajo, el desarrollo y validación de est
 
 * **Variables Espaciotemporales de Capa Límite:** Incorporar mediciones de la altura de la capa de mezcla y perfiles térmicos verticales obtenidos vía perfiles de viento o datos satelitales como covariables exógenas adicionales.
 
+# Repositorio del Proyecto
+
+El código fuente de los scripts de limpieza de datos, análisis exploratorio, selección por Mahalanobis, análisis factorial y modelación SARIMAX, así como las figuras y recursos del proyecto, está disponible en el repositorio público:
+
+\url{https://github.com/INFOAOAA/SIMA_Proyecto}
+
+## Declaración sobre el uso de Inteligencia Artificial Generativa (Opción B)
+
+**Herramientas utilizadas:** Modelos de lenguaje de Inteligencia Artificial Generativa (Claude / Opencode / Gemini).
+
+**Uso realizado:**
+
+* **Optimización de código:** Apoyo en la depuración, optimización y estructuración de scripts en R y Python para el procesamiento de datos del SIMA, cálculo de la Distancia de Mahalanobis, ejecución del Análisis Factorial Exploratorio (AFE) y ajuste del modelo SARIMAX.
+
+* **Redacción y formato:** Asistencia en la redacción técnica, corrección de estilo y formateo de ecuaciones en LaTeX y tablas sintéticas dentro de Quarto (`.qmd`).
+
+* **Estructura:** Asistencia en la organización modular del informe final y la derivación de contenido hacia la sección de Anexos.
+
+**Secciones con intervención de IA:**
+
+* *Preparación de Datos y Metodología:* Revisión de sintaxis para transformaciones de varianza (Yeo-Johnson) y optimización de selección de estaciones.
+
+* *Modelación SARIMAX y Diagnóstico de Residuos:* Edición del formato numérico/estadístico y estructura formal de las ecuaciones del modelo.
+
+* *Anexos y Estructuración del Documento:* Formateo de código Quarto para la separación entre la bibliografía y los apéndices.
+
+**Validación y responsabilidad:**
+
+* Confirmamos que todos los análisis estadísticos, matrices de correlación, autovalores, diagnósticos de residuos (Ljung-Box, Durbin-Watson) y métricas de desempeño predictivo ($R^2$, MAE, RMSE, MAPE) fueron calculados, probados e interpretados de manera independiente por el equipo a partir de la base de datos oficial del SIMA (2020-2025).
+
+* Revisamos, verificamos y asumimos la responsabilidad total e íntegra sobre la validez metodológica, la precisión numérica y el contenido final entregado en este informe.
+
+\clearpage
+
 # Referencias
 
 ::: {#refs} 
 :::
-
-
-
 
 \FloatBarrier
 \clearpage
@@ -434,8 +465,3 @@ Métricas Comparativas de los Modelos
 
 \vspace{1em}
 
-**Repositorio del Proyecto**
-
-El código fuente de los scripts de limpieza de datos, análisis exploratorio, selección por Mahalanobis, análisis factorial y modelación SARIMAX, así como las figuras y recursos del proyecto, está disponible en el repositorio público:
-
-https://github.com/INFOAOAA/SIMA_Proyecto
