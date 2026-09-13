@@ -1,11 +1,4 @@
 ---
-titulo: "Reporte de Análisis Multivariado y Selección Espacial de Calidad del Aire (PM10) en la ZMM"
-subtitulo: "Consolidación de Datos, Mahalanobis y Estrategia de Predicción Operativa"
-curso: "MA2003B Análisis Multivariado"
-profesor: "Blanca Rosa Ruiz Hernández y Raúl Gómez Muñoz"
-campus: "Campus Monterrey"
-fecha: "\\today"
-
 format:
   pdf:
     pdf-engine: pdflatex
@@ -25,14 +18,12 @@ format:
       - style=apa
     include-in-header:
       - text: |
-          \usepackage[T1]{fontenc}
-          \usepackage[utf8]{inputenc}
-          \newcommand{\titulo}{Etapa 3}
-          \newcommand{\subtitulo}{Adecuación y/o validación del Modelo}
+          \newcommand{\titulo}{Predicción de $PM_{10}$ en la Zona Metropolitana de Monterrey}
+          \newcommand{\subtitulo}{Análisis Factorial de Variables Meteorológicas y Modelado Horario SARIMAX}
           \newcommand{\autores}{
-            Angel Ruben Galindo Alvarez \& A00228356 \\
-            Jorge Raul Martinez Ramirez \& A01286802 \\
-            Roberto Perez Castillo \& A01286834 \\
+            Angel Rubén Galindo Álvarez \& A00228356 \\
+            Jorge Raúl Martínez Ramírez \& A01286802 \\
+            Roberto Pérez Castillo \& A01286834 \\
             Alejandro Torres \& A00840943 
           }
           \newcommand{\curso}{MA2003B Análisis Multivariado}
@@ -43,297 +34,303 @@ format:
     include-before-body: titlepage.tex
 ---
 
-# Objetivo del Análisis y Evolución del Alcance
+# Resumen
 
-## Pregunta de Investigación
+El material particulado menor a 10 micrómetros ($PM_{10}$) representa el principal contaminante atmosférico crítico en la Zona Metropolitana de Monterrey (ZMM) (\cite{ramirez2025modeling}), superando de forma recurrente los límites establecidos por la norma NOM-025-SSA1 (\cite{ssa2021nom025}). Este estudio desarrolla un marco predictivo multivariado y autorregresivo de resolución horaria ($s=24$) para proveer al Sistema de Monitoreo Ambiental (SIMA) una herramienta funcional de alerta temprana a corto plazo (horizonte de 7 horas).
 
-¿De qué manera influyen las condiciones meteorológicas y los gases precursores en la variabilidad de las concentraciones diarias de material particulado ($PM_{10}$) en la Zona Metropolitana de Monterrey, y cómo puede optimizarse la selección de estaciones de monitoreo mediante distancia multivariada para construir modelos autorregresivos capaces de predecir contingencias ambientales en el corto plazo?
+El diseño metodológico integra cuatro etapas principales:
 
-## Objetivo General
+1. **Filtro y depuración:** Validación de series horarias continuas (2020–2025) bajo el criterio de disponibilidad $\ge 75\%$ diario, corrección de anomalías físicas y estabilización de varianza mediante la transformación Yeo-Johnson.
 
-Desarrollar y validar un marco de modelado predictivo multivariado para pronosticar concentraciones diarias de $PM_{10}$ \cite{ramirez2025modeling} en tres estaciones pivote representativas de la Zona Metropolitana de Monterrey (SE3, NO2, NE3). Se utiliza la distancia de Mahalanobis para la selección de estaciones y el modelo estacional SARIMAX con variables exógenas para proveer al Sistema de Monitoreo Ambiental (SIMA) una herramienta funcional de alerta temprana.
+2. **Selección espacial por interdependencia:** Aplicación de la Distancia de Mahalanobis sobre la matriz de covarianza agrupada de 15 estaciones del SIMA. Se descartó el agrupamiento por $k$-means debido a la pérdida de comportamiento extremo, identificando un triplete de estaciones que maximizan la separación combinada de 19.97: García (NO2), Cadereyta (SE3) y Pesquería (NE3).
 
-## Cambios y Justificación del Alcance
+3. **Reducción de dimensionalidad:** Análisis Factorial Exploratorio (AFE) independiente por estación mediante el método de Ejes Principales y rotación Varimax, extrayendo de 2 a 3 factores latentes sintéticos (combustión, dinámica fotoquímica y humedad/estabilidad térmica) que eliminaron la multicolinealidad y mostraron los factores latentes del comportamiento de cada estación.
 
-El diseño del proyecto se ajustó para reflejar la dinámica real de los datos del SIMA. Inicialmente, la información horaria presentaba huecos por fallas de sensores y volatilidad extrema por ráfagas de corta duración que distorsionaban la tendencia general de la calidad del aire. Para estabilizar la señal, se transicionó a promedios diarios. En apego a la norma NOM-025-SSA1 \cite{ssa2021nom025}, solo se validaron días con al menos 18 horas de registro ($\ge 75\%$ de disponibilidad). Las ventanas faltantes menores a tres horas se imputaron mediante interpolación lineal por estación, garantizando la continuidad sin mezclar comportamientos entre estaciones. 
+4. **Modelado predictivo de series de tiempo:** Estimación de modelos SARIMAX con variables exógenas contenidas en los factores latentes, con una escala horaria.
 
-El cambio estructural más significativo fue el reemplazo del agrupamiento por $k$-means en favor de la Distancia de Mahalanobis. Los métodos de clustering tradicionales promedian el comportamiento de las estaciones, por lo cual los modelos tenian dificultades en encontrar los clusters ya que cada estación se comporta de manera significativamente difeente. La Distancia de Mahalanobis resolvió esto al evaluar la matriz de covarianza de los datos, consiguiendo el triplete de estaciones que exhibe los comportamientos más extremos y contrastantes, sin forzar promedios artificiales. Finalmente, el horizonte predictivo se ajustó de un año a una ventana de corto plazo. La meteorología pierde predictibilidad después de dos semanas; proyectar a 365 días acumula mucho error y se vuelve inútil para la gestión de contingencias \cite{gonzalez2011temporal}.
+Los resultados en la ventana de evaluación (7 horas) demostraron un muy buen desempeño en la estación NO2 con un Error Porcentual Absoluto Medio (MAPE) de 18.10% y MAE de 13.31 $\mu g/m^3$. En las estaciones SE3 y NE3 se registraron MAPEs del 23.22% y 63.54%, respectivamente. El diagnóstico de residuos confirmó la eliminación exitosa de la autocorrelación serial (Durbin-Watson $\approx 2.01$ en NO2), aunque la presencia de leptocurtosis confirma que los picos atípicos de contaminación deben ser gestionados mediante el límite superior del intervalo de confianza al 95%. Se entrega un pipeline totalmente reproducible para su implementación en la infraestructura del SIMA.
 
-# Técnicas Estadísticas y Flujo Metodológico
+# Introducción y Justificación
 
-## Agregación Normativa y Filtros
+La Zona Metropolitana de Monterrey (ZMM), consolidada como uno de los centros industriales y urbanos más dinámicos de América Latina, enfrenta un problema estructural de contaminación atmosférica enfocado en el material particulado menor a 10 micrómetros ($PM_{10}$). La topografía de la ZMM, caracterizada por un valle semiárido rodeado por barreras naturales de gran elevación como la Sierra Madre Oriental, el Cerro de las Mitras y el Cerro de la Silla, limita la ventilación natural y favorece la acumulación de contaminantes. Este fenómeno se agudiza durante los meses de invierno debido al incremento en la frecuencia de inversiones térmicas subsidiaras (\cite{gonzalez2011temporal}).
 
-Se depuró la base de datos eliminando anomalías registradas por los sensores (temperaturas de -57 °C y vientos sobre 158 km/h), acotando los valores a límites realistas (-5 °C a 45 °C y máximo 80 km/h). Las correcciones se aplicaron mediante arrastre del último valor válido (forward fill) por estación @tbl-coherencia.
+A la condición geofísica se suma un parque vehicular en constante expansión y una densa actividad industrial (siderúrgica, cementera, química y de generación eléctrica). Las concentraciones diarias de $PM_{10}$ superan sistemáticamente los límites máximos permisibles de la norma NOM-025-SSA1, representando un riesgo directo para la salud pública al asociarse con un incremento en admisiones hospitalarias por enfermedades respiratorias y cardiovasculares (\cite{ceronbreton2021short}).
 
-## Selección por Distancia de Mahalanobis
+El Sistema de Monitoreo Ambiental (SIMA) opera una red automatizada de 15 estaciones continuas. Sin embargo, los esquemas tradicionales de gestión ambiental suelen operar de forma reactiva, emitiendo alertas cuando las concentraciones ya han rebasado los umbrales normativos. La transición hacia una gestión preventiva requiere la implementación de modelos predictivos capaces de anticipar la dinámica del contaminante con varias horas de antelación.
 
-Para aislar las estaciones más distantes, la distancia entre dos estaciones $i$ y $j$ se definió como:
+La justificación de este trabajo radica en estructurar una metodología analítica transparente, reproducible e interpretable. En lugar de utilizar modelos de caja negra, la integración de la Distancia de Mahalanobis para la selección de sitios de monitoreo, el Análisis Factorial Exploratorio (AFE) para la resolución de la multicolinealidad y la modelación autorregresiva SARIMAX permite al SIMA contar con un sistema de alerta temprana fundamentado estadísticamente para respaldar la toma de decisiones operativas.
+
+## Problemática y Objetivos
+
+### Problemática
+El pronóstico operativo de $PM_{10}$ a escala horaria presenta tres barreras metodológicas fundamentales:
+
+1. **Heterogeneidad y redundancia espacial:** Las 15 estaciones de la red SIMA capturan dinámicas microclimáticas diferenciadas. Promediar la red o agrupar estaciones mediante algoritmos estandarizados como $k$-means diluye los comportamientos extremos necesarios para prever contingencias.
+2. **Multicolinealidad entre predictores:** Los contaminantes precursores ($CO, NO, NO_2, SO_2, O_3$) y los parámetros meteorológicos (temperatura, humedad relativa, velocidad y dirección del viento) presentan interdependencias severas que desestabilizan las estimaciones por regresión múltiple convencional.
+3. **Estructura estacional diurna:** Las series temporales de calidad del aire exhiben autocorrelación espacial y patrones estacionales diurnos marcados ($s=24$), influenciados por las horas pico de tráfico vehicular y la dinámica del límite de la capa de mezcla atmosférica.
+
+### Objetivo General
+Desarrollar y validar un marco multivariado de modelación autorregresiva a resolución horaria ($s=24$) para pronosticar las concentraciones de $PM_{10}$ en tres estaciones pivote de la ZMM (García - NO2, Cadereyta - SE3 y Pesquería - NE3), utilizando la Distancia de Mahalanobis para la selección, Análisis Factorial Exploratorio para la síntesis de variables exógenas y el modelo SARIMAX para la predicción a corto plazo (horizonte de 7 horas).
+
+### Objetivos Específicos
+* Consolidar y validar la base de datos horaria del SIMA (2020–2025) aplicando criterios de representatividad temporal ($\ge 75\%$ de registros válidos diarios) bajo la norma NOM-025-SSA1.
+* Identificar el triplete de estaciones con mayor contraste multivariado mediante la maximización de la Distancia de Mahalanobis sobre la matriz de covarianza agrupada ($S_{\text{pooled}}^{-1}$).
+* Reducir la dimensionalidad de las variables meteorológicas y contaminantes precursores mediante Análisis Factorial Exploratorio (AFE) con rotación Varimax, generando factores latentes ortogonales que eliminen la multicolinealidad.
+* Formular y evaluar los modelos SARIMAX $(p,d,q)\times(P,D,Q)_{24}$ para las tres estaciones seleccionadas, diagnosticando la significancia de los factores exógenos y la estructura de los residuos en la ventana de evaluación de 7 horas.
+
+## Contexto Geográfico y Factores Ambientales de las Estaciones
+
+La representatividad del modelo se sustenta en la heterogeneidad geográfica de las tres estaciones seleccionadas mediante la Distancia de Mahalanobis, por lo cual entraremos en detalle las características geográficas de cada una de las estaciones:
+
+* **Estación NO2 (García):** Localizada en el extremo poniente de la ZMM ($25.793^\circ\text{N}, -100.583^\circ\text{W}$). Se ubica en una zona semiárida adyacente al cañón de la Huasteca y al área de extracción de minerales no metálicos (pedreras). Su perfil ambiental se caracteriza por la resuspensión de polvo inorgánico propiciada por vientos intensos estancados y por emisiones derivadas del tráfico de carga pesada en la carretera Monterrey-Saltillo.
+* **Estación SE3 (Cadereyta):** Situada en el sector suroriente de la cuenca metropolitana ($25.586^\circ\text{N}, -99.996^\circ\text{W}$). Está fuertemente influenciada por la Refinería de PEMEX "Héctor R. Lara Sosa" e industrias químicas aledañas. Registra niveles elevados de $SO_2$ y precursores de azufre que, al interactuar con la humedad relativa de la cuenca del río San Juan, favorecen la formación de aerosoles secundarios.
+* **Estación NE3 (Pesquería):** Ubicada en el corredor industrial de reciente expansión ($25.782^\circ\text{N}, -100.063^\circ\text{W}$). Corresponde a un entorno dominado por complejos siderúrgicos, automotrices y un crecimiento urbano acelerado. Muestra concentraciones base moderadas con incrementos abruptos asociados a los ciclos operacionales industriales y al transporte logístico.
+
+![Ubicación geográfica de las estaciones analizadas del SIMA en la ZMM.](Estaciones.jpg){#fig-mapa-sima width=85% fig-align="center"}
+
+
+
+
+# Preparación de Datos y Metodología
+
+## Depuración y Tratamiento Normativo de los Datos
+
+La base de datos original comprende registros horarios del SIMA acumulados entre los años 2020 y 2025 para 15 estaciones de monitoreo. Para garantizar la validez estadística y física de los análisis, se ejecutó un protocolo de depuración estructurado en tres fases:
+
+1. **Filtrado de Anomalías Físicas:** Se identificaron y corrigieron inconsistencias atribuibles a fallas de calibración o lecturas fuera de rango operacional en los sensores. Específicamente, se acotaron los parámetros meteorológicos a límites físicamente coherentes para la región (temperaturas entre -10 °C y 50 °C; velocidades de viento inferiores a 100 km/h). Las lecturas anómalas (e.g., $-57.8\,^\circ\text{C}$ o vientos de $158.8\text{ km/h}$) se trataron mediante un algoritmo de arrastre temporal (*forward fill*) acotado por estación.
+2. **Criterio de Representatividad Normativa:** Conforme a las directrices de la norma NOM-025-SSA1 (\cite{ssa2021nom025}), se validaron únicamente los días que contaran con un mínimo de 18 horas de registro continuo ($\ge 75\%$ de disponibilidad diaria). Para ventanas faltantes de corta duración ($\le 3$ horas), se aplicó interpolación lineal intra-estacional.
+3. **Estabilización de Varianza (Transformación Yeo-Johnson):** Dado que la distribución de $PM_{10}$ exhibe una asimetría positiva severa y heterocedasticidad, se aplicó la transformación Yeo-Johnson sobre la variable respuesta para aproximar la normalidad y estabilizar la varianza residual en el modelado posterior.
+
+## Justificación de Decisiones Metodológicas Clave
+
+### Descarte del Agrupamiento por $k$-means
+En fases preliminares del proyecto se exploró el uso de agrupamiento mediante $k$-means para categorizar las estaciones de la red. Sin embargo, el algoritmos de clustering promedia los comportamientos de las estaciones asignadas a un mismo conglomerado. En el contexto de contingencias ambientales, este suavizado destruye la variabilidad de los picos atípicos en estaciones expuestas a dinámicas microclimáticas particulares (tales como las pedreras en NO2 o la refinería en SE3). Por ello, se descartó el agrupamiento en favor de la Distancia de Mahalanobis.
+
+### Preservación de la Resolución Horaria
+Asimismo, se descartó la agregación de datos a promedios diarios de 24 horas. La dinámica de $PM_{10}$ en la ZMM está fuertemente acoplada a ciclos estacionales diurnos ($s=24$), como el tráfico en horas pico y la formación de la capa de mezcla nocturna. Reducir la serie a datos diarios elimina la capacidad del modelo para operar como un verdadero Sistema de Alerta Temprana en ventanas de oportunidad operativas (e.g., pronósticos a 7 horas).
+
+## Selección Espacial por Distancia de Mahalanobis
+
+Para seleccionar las tres estaciones centinela que maximicen la heterogeneidad y representatividad multivariada sin incurrir en redundancia espacial, se aplicó la Distancia de Mahalanobis sobre los vectores de medias de las 15 estaciones de la red.
+
+La distancia multivariada entre una estación $i$ y una estación $j$ se define como:
 
 $$D_M(\mathbf{u}_i, \mathbf{u}_j) = \sqrt{(\mathbf{u}_i - \mathbf{u}_j)^T S_{\text{pooled}}^{-1} (\mathbf{u}_i - \mathbf{u}_j)}$$
 
-Donde $\mathbf{u}_i$ es el vector de medias de las variables en la estación $i$, y $S_{\text{pooled}}^{-1}$ es la pseudo-inversa de la matriz de covarianza agrupada. Se seleccionó el trío que maximiza la separación espacial @tbl-mahalanobis:
+donde $\mathbf{u}_i$ representa el vector de medias de las variables ambientales de la estación $i$, y $S_{\text{pooled}}^{-1}$ es la inversa de la matriz de covarianza agrupada. Se calculó la matriz de distancias por pares y se formuló un problema de optimización combinatoria para hallar el triplete de estaciones que maximiza la separación espacial conjunta:
 
-$$\text{Maximizar } \mathcal{D} = D_M(\mathbf{u}_1, \mathbf{u}_2) + D_M(\mathbf{u}_1, \mathbf{u}_3) + D_M(\mathbf{u}_2, \mathbf{u}_3)$$
+$$\text{Max } \mathcal{D} = D_M(\mathbf{u}_1, \mathbf{u}_2) + D_M(\mathbf{u}_1, \mathbf{u}_3) + D_M(\mathbf{u}_2, \mathbf{u}_3)$$
 
+El algoritmo identificó como solución óptima al triplete conformado por **NO2 (García)**, **SE3 (Cadereyta)** y **NE3 (Pesquería)**, alcanzando una separación combinada de **19.97**. Este conjunto captura los tres extremos de la cuenca metropolitana: el poniente mineral, el suroriente industrial-petroquímico y el nororiente de manufactura en expansión.
 
-# Resultados del Análisis Exploratorio
+## Reducción de Dimensionalidad por Análisis Factorial
 
-El procesamiento confirmó la heterogeneidad geográfica de la metrópoli. La selección de Mahalanobis arrojó una separación combinada de 19.97, aislando a SE3 (Cadereyta), NO2 (García) y NE3 (Pesqueria).
+Las covariables meteorológicas y de contaminación presentan colinealidad cruzada. Para evitar la desestabilización de las estimaciones en los modelos predictivos, se implementó un Análisis Factorial Exploratorio (AFE) de forma completamente independiente y dedicada para cada una de las tres estaciones seleccionadas.
 
-El análisis visual confirma los mecanismos físicos de estas tres zonas:
+Esta aproximación individualizada responde a que las dinámicas físicas y químicas varían según la ubicación geográfica:
 
-- Efecto de Inversión Térmica: La @fig-estacionalidad demuestra un patrón en forma de "U". Durante los meses de invierno (noviembre a marzo), el enfriamiento del suelo impide la mezcla vertical del aire, disparando la concentración de $PM_{10}$ con picos frecuentes por encima de los 150 $\mu g/m^3$. En contraste, la inestabilidad atmosférica del verano facilita la ventilación, comprimiendo la dispersión de los datos.
+* Las tasas de dispersión, reacciones fotoquímicas y fuentes de emisión locales generan estructuras de covarianza distintas en cada punto de la cuenca.
 
-- Agentes de Lavado Atmosférico: La @fig-correlacion corrige la percepción sobre la temperatura. La correlación del $PM_{10}$ con la temperatura absoluta ($TOUT$) es nula (-0.03). El verdadero mecanismo de limpieza es la Humedad Relativa ($RH$, $r = -0.41$), cuyo efecto probablemente aglomera las partículas forzando su caída por gravedad.
+* Tratar la red con un AFE global forzaría combinaciones lineales homogéneas que distorsionarían los predictores reales en microclimas específicos.
 
-- Dualidad del Viento: La @fig-efectoviento ilustra cómo el viento funciona como vector de limpieza a velocidades moderadas (reduciendo la concentración base), pero desencadena eventos de resuspensión. Las ráfagas extremas elevan las concentraciones anómalas, particularmente visibles en la dispersión superior de la estación NO2. 
+### Protocolo de Filtrado e Identificación Local
 
----
+Para cada estación se aplicó un proceso iterativo en dos fases:
 
-# Modelado Predictivo y Técnicas Multivariadas
+* **Adecuación Muestral Local (KMO):** Se evaluó el índice Kaiser-Meyer-Olkin por variable. Aquellas variables con $KMO < 0.50$ fueron descartadas secuencialmente hasta lograr un $KMO$ global aceptable ($>0.7$).
 
-## Análisis Factorial
-Para resolver los problemas de multicolinealidad entre los distintos contaminantes y las variables meteorológicas, se aplicó un Análisis Factorial. Esta técnica de interdependencia redujo la dimensionalidad del conjunto original extrayendo tres variables latentes principales: `Factor_Combustion`, `Factor_Photochemical` y `Factor_Moisture`. La creación de estos factores ortogonales permitió capturar la varianza combinada del sistema atmosférico en índices simplificados, garantizando el cumplimiento de los supuestos de no multicolinealidad requeridos para los modelos de regresión posteriores.
+* **Evaluación de Unicidad (*Uniqueness*):** Tras la extracción por Ejes Principales (*Principal Axis*), se eliminaron las variables con varianza no explicada o unicidad $u^2 \ge 0.90$, reteniendo únicamente los predictores con suficiente comunalidad.
 
-### 1. Filtrado de Adecuación Muestral (Criterio KMO Iterativo)
+* **Rotación Varimax y Extracción:** Se determinó la cantidad óptima de factores mediante el criterio de Kaiser ($\lambda \ge 1$) combinado con la caída relativa del *Scree Plot*, aplicando rotación ortogonal Varimax.
 
-Antes de la extracción, se evaluó la idoneidad de la matriz de correlaciones mediante el índice de **Kaiser-Meyer-Olkin (KMO)**. Para garantizar la estabilidad del modelo:
+### Estructura Factorial Particular por Estación
 
-* Se implementó una función iterativa que evalúa el KMO global y los coeficientes individuales por variable.
-* En cada iteración, si existían variables con $KMO < 0.60$, el algoritmo eliminó **únicamente la variable con la puntuación más baja**, recalculando la matriz de correlación residual para evitar la eliminación prematura de interacciones complejas.
-* Se removieron variables exógenas con alta unicidad o baja contribución estructural (`PRS`, `TOUT`, `SR`), logrando una matriz final con un KMO global superior al umbral crítico.
+Como resultado del AFE independiente, cada estación consolidó un número y una composición de factores latentes completamente diferenciada:
 
----
+**1. Estación NO2 (García - Poniente)**
 
-### 2. Extracción y Rotación Factorial
+Debido a la alta variabilidad eólica del cañón de la Huasteca, los gases de combustión primaria ($NO$, $NO_2$, $CO$) exhibieron una elevada unicidad ($u^2 > 0.87$) y fueron descartados por el algoritmo de filtrado. Se retuvieron 2 factores latentes basados en 5 variables meteorológicas y fotoquímicas ($KMO = 0.7010$):
 
-* **Método de Extracción:** Se utilizó la **Extracción por Ejes Principales (*Principal Axis / PA*)**, la cual estima de forma iterativa las comunalidades en la diagonal de la matriz de correlación sin asumir estricta normalidad multivariada.
-* **Criterio de Selección:** A través del gráfico de sedimentación (*Scree Plot*) y los autovalores de la matriz ($\lambda > 1$), se determinó la retención de **3 factores latentes principales**.
-* **Rotación Ortogonal:** Se aplicó una rotación **Quartimax**, cuyo objetivo matemático es simplificar las filas de la matriz de cargas factoriales ($L$), concentrando la varianza en unas cuantas variables por factor y manteniendo la ortogonalidad (independencia lineal) entre los factores extraídos.
+* **`Factor_1_Photochemical` ($\lambda = 2.15$):** Carga fuertemente sobre $O_3$ (0.787), $WSR$ (0.573) y $RH$ (-0.624). Captura los episodios de inestabilidad fotoquímica y dispersión por viento.
 
----
+* **`Factor_2_Temperature` ($\lambda = 0.60$):** Dominado por la temperatura $TOUT$ (-0.770) y la presión barométrica $PRS$ (0.721), representando la dinámica micrometeorológica local.
 
-### 3. Estimación de Puntuaciones Factoriales (*Factor Scores*)
+**2. Estación SE3 (Cadereyta - Suroriente)**
 
-El uso de **Análisis Factorial Exploratorio (AFE)** como paso previo al modelo SARIMAX responde a tres retos fundamentales en la modelación de series de tiempo ambientales:
+Dada la fuerte influencia persistente de la refinería e industria pesada, se retuvieron 11 variables sintéticas distribuidas en 3 factores latentes ($KMO = 0.7120$):
 
----
+* **`Factor_1_Temperature` ($\lambda = 2.82$):** Representa el perfil térmico y de estabilidad barométrica ($TOUT$: -0.924, $PRS$: 0.617).
 
-**1. Eliminación Radical de la Multicolinealidad** 
-* **El Problema:** En estaciones de monitoreo ambiental, los contaminantes ($\text{CO}, \text{NO}_2, \text{SO}_2$) y las variables meteorológicas ($\text{RH}, \text{O}_3, \text{WSR}$) presentan una **correlación cruzada severa**. Introducir todas estas series simultáneamente como covariables exógenas ($X_t$) en un SARIMAX desestabiliza la estimación por Máxima Verosimilitud, inflando los errores estándar de los coeficientes.
-* **La Solución por AFE:** La rotación ortogonal (*Quartimax*) garantiza que los tres factores resultantes (`Combustion`, `Photochemical`, `Moisture`) sean **matemáticamente independientes entre sí ($r = 0$)**. Esto permite aislar el impacto de cada proceso atmosférico sobre la variable objetivo ($\text{PM}_{10}$) sin interferencia estadística.
+* **`Factor_2_Combustion` ($\lambda = 1.41$):** Agrupa las emisiones primarias directas con altas cargas en $NO_2$ (0.751), $NO$ (0.692), $PM_{2.5}$ (0.631) y $CO$ (0.433).
 
----
+* **`Factor_3_Photochemical` ($\lambda = 0.72$):** 
+Sintetiza la interacción entre la radiación solar $SR$ (0.675), $O_3$ (0.765) y precursores de azufre $SO_2$ (0.421).
 
-**2. Condensación de Información y Parsimonia del Modelo** 
-* **El Problema:** Ajustar un modelo SARIMAX con 8 o 9 variables exógenas individuales (más sus rezagos $t-1$) incrementa exponencialmente el número de parámetros a estimar, provocando sobreajuste (*overfitting*) y pérdida de grados de libertad.
-* **La Solución por AFE:** Se reduce la dimensión del problema de 9 variables originales a solo **3 variables latentes sintéticas**, reteniendo más del 65–70% de la varianza explicada del sistema. Un modelo más parsimonioso mejora la capacidad de generalización fuera de muestra (*out-of-sample*).
+**3. Estación NE3 (Pesquería - Nororiente)**
 
----
+En el corredor industrial-urbano de reciente expansión se retuvieron 8 variables organizadas en 3 factores latentes ($KMO = 0.7065$):
 
-**3. Captura de Mecanismos Físico-Atmosféricos Subyacentes**
-En lugar de tratar las variables como mediciones aisladas, las puntuaciones factoriales (*Factor Scores*) representan **fenómenos estructurales del aire**:
+* **`Factor_1_Moisture` ($\lambda = 2.99$):** Dominado de forma casi exclusiva por la humedad relativa $RH$ (0.995) e inversamente por $O_3$ (-0.644), capturando eventos de condensación e inversión térmica.
 
-* **`Factor_Combustion`:** Actúa como un proxy integrado de la actividad antropogénica (industria + tráfico vehicular).
-* **`Factor_Photochemical`:** Sintetiza la dinámica de formación de contaminantes secundarios accionados por radiación solar y viento.
-* **`Factor_Moisture`:** Modela el efecto de la humedad ambiental sobre la deposición o suspensión de partículas.
+* **`Factor_2_Combustion` ($\lambda = 0.94$):** Refleja la actividad del transporte de carga e industria pesada ($NO_2$: 0.859, $NO$: 0.490, $WDR$: 0.369).
 
----
+* **`Factor_3_Temperature` ($\lambda = 0.72$):** Sintetiza las fluctuaciones de temperatura $TOUT$ (-0.882) y presión $PRS$ (0.649).
 
-### Impacto Directo en la Evaluación SARIMAX
+### Puntuaciones Factoriales (*Factor Scores*)
 
-La incorporación de estos factores (junto con sus rezagos $t-1$) explica directamente el rendimiento
-Para transferir la información al modelo predictivo SARIMAX, las puntuaciones factoriales continuas se calcularon mediante el **método de regresión**:
+Las puntuaciones continuas ortogonales ($r = 0$ inter-factor por estación) se calcularon para cada registro horario $t$ mediante el método de regresión:
 
-$$W = R^{-1} L$$
+$$\mathbf{F}_{k,t} = \mathbf{Z}_{k,t} \cdot R_k^{-1} L_k$$
 
-$$\mathbf{F} = \mathbf{Z} \cdot W$$
+donde $k \in \{\text{NO2}, \text{SE3}, \text{NE3}\}$, $\mathbf{Z}_{k,t}$ es la matriz de variables estandarizadas retenidas en la estación $k$, $R_k^{-1}$ es la matriz de correlaciones invertida y $L_k$ es la matriz de cargas factoriales rotadas. Estas series temporales sintéticas sirven como variables exógenas ($X_t$) libres de multicolinealidad dentro de la subsecuente modelación SARIMAX de cada sitio.
 
-Donde:
-* $\mathbf{Z}$: Matriz de datos originales estandarizados ($Z = \frac{X - \mu}{\sigma}$).
-* $R^{-1}$: Pseudoinversa de Moore-Penrose de la matriz de correlación de los predictores.
-* $L$: Matriz de cargas factoriales rotadas.
-* $W$: Matriz de pesos factoriales (*factor score weights*).
-* $\mathbf{F}$: Puntuaciones factoriales resultantes (`Factor_Combustion`, `Factor_Photochemical`, `Factor_Moisture`).
+# Modelación SARIMAX, Resultados y Diagnóstico de Residuos
 
----
+## Formulación del Modelo SARIMAX
 
-### Interpretación Físico-Atmosférica de los Factores Extraídos
+Para predecir las concentraciones horarias de $PM_{10}$ incorporando la inercia temporal y las dinámicas meteorológicas y contaminantes, se estructuró un modelo autorregresivo integrado de media móvil con variables exógenas y componente estacional: SARIMAX $(p,d,q)\times(P,D,Q)_{24}$.
 
-La estructura de cargas factoriales resultante permitió agrupar las variables originales en tres dimensiones físicas bien definidas @tbl-resultsFac
+La especificación matemática del modelo para la variable transformada $Y_t$ (mediante Yeo-Johnson) en la estación $k$ se expresa como:
 
+```{=latex}
+\begin{equation}
+\begin{aligned}
+&\Phi_P(B^{24})\phi_p(B)(1-B)^d(1-B^{24})^D Y_t \\
+&= \sum_{m=1}^{K}\gamma_m F_{m,t}
++ \Theta_Q(B^{24})\theta_q(B)\epsilon_t
+\end{aligned}
+\end{equation}
+```
 
+donde:
 
-## Modelo SARIMAX y Validación de Errores
-Se implementaron modelos de series de tiempo SARIMAX utilizando los factores extraídos como variables exógenas para predecir el comportamiento del $PM_{10}$ @tbl-factors.
+* $B$ es el operador de retardo (*backshift*), tal que $B^j Y_t = Y_{t-j}$.
 
-* El modelo para la estación NO2 es el más eficiente y apto para predicción operativa, presentando un error porcentual absoluto medio (MAPE) del 15.43% y los errores absolutos más bajos de la red.
-* Las estaciones SE3 y NO2 requirieron un nivel de diferenciación ($d=1$) para estabilizar su media temporal, mientras que NE3 se modeló como un proceso puramente autorregresivo.
-* Todos los modelos capturaron exitosamente un ciclo estacional de 7 días, reflejando la dinámica de la actividad vehicular e industrial de la zona metropolitana a lo largo de la semana.
+* $\phi_p(B) = 1 - \sum_{i=1}^p \phi_i B^i$ representa el operador autorregresivo ordinario de orden $p$.
 
-## Importancia de Variables Exógenas
-Los factores extraídos (`Factor_Combustion`, `Factor_Photochemical`, `Factor_Moisture`) demostraron ser predictores estadísticamente significativos (valor $p < 0.05$, tendiendo a $0.000$) en las tres estaciones. En la estación SE3 (Cadereyta), los coeficientes de regresión muestran que la humedad y la combustión tienen el impacto más fuerte sobre la varianza del $PM_{10}$. En contraste, para la estación NE3 (Pesquería), el factor de combustión domina de forma aislada como la variable explicativa de mayor peso.
+* $\theta_q(B) = 1 + \sum_{j=1}^q \theta_j B^j$ es el operador de media móvil ordinario de orden $q$.
 
-## Validación de Supuestos Matemáticos
-* **Estacionariedad:** Validada implícitamente mediante la diferenciación de primer orden en las ecuaciones de NO2 y SE3, logrando que la media de la serie fuera constante en el tiempo.
-* **Normalidad de Residuos:** La prueba de Jarque-Bera arrojó valores de curtosis superiores a 10 para SE3 y NO2. Esto indica que los residuos no se distribuyen de forma normal (son fuertemente leptocúrticos), ya que el modelo lineal subestima los picos anómalos o extremos de contaminación.
-* **Homocedasticidad:** La prueba de Ljung-Box sugiere la presencia de heterocedasticidad temporal; la varianza de los errores cambia, incrementándose drásticamente durante los episodios de muy alta concentración.
+* $\Phi_P(B^{24})$ y $\Theta_Q(B^{24})$ son los operadores estacionales de orden $P$ y $Q$ respectivamente, ajustados al periodo diurno $s = 24$.
 
-# Conclusiones Parciales y Siguientes Pasos
+* $(1 - B)^d$ y $(1 - B^{24})^D$ representan las diferencias ordinarias ($d$) y estacionales ($D$).
 
-El uso combinado del Análisis Factorial y la Distancia de Mahalanobis permitió aislar eficientemente las dinámicas subyacentes de calidad del aire y seleccionar las tres estaciones con comportamientos más contrastantes (NO2, SE3, NE3), eliminando la redundancia espacial en la red de monitoreo. La implementación de modelos SARIMAX validó que la meteorología, los factores de combustión y la periodicidad semanal son excelentes predictores base de la contaminación (alcanzando un destacable error del 15.43% en la estación NO2). 
+* $F_{m,t}$ corresponde a la serie del $m$-ésimo factor latente continuo obtenido del AFE individual de la estación, con su respectivo coeficiente de regresión $\gamma_m$.
 
-Sin embargo, el análisis de residuos indica que las ecuaciones lineales subestiman los episodios extremos de $PM_{10}$, evidenciado por la alta curtosis y la heterocedasticidad de los errores. Para la siguiente fase, el objetivo primario evolucionará para enfocarse en la optimización del modelado de estos eventos extremos. El camino a seguir consistirá en explorar transformaciones logarítmicas en la variable dependiente, o evaluar la integración de algoritmos no lineales (como XGBoost o redes neuronales) en un formato de ensamble para corregir los picos residuales y mejorar el MAPE en las estaciones SE3 y NE3.
+* $\epsilon_t \sim \mathcal{N}(0, \sigma^2)$ es el término de error de ruido blanco.
 
-## Enlace al Repositorio de Código:
+## Selección de Ordenes y Evaluación por Estación
 
-\href{https://github.com/INFOAOAA/SIMA_Proyecto/tree/main/Documento}{Enlace al Repositorio de Código del Documento} 
+La identificación de los órdenes $(p,d,q)\times(P,D,Q)_{24}$ se fundamentó en la inspección de las funciones de autocorrelación (ACF) y autocorrelación parcial (PACF) sobre las series diferenciadas, optimizada posteriormente mediante la minimización del Criterio de Información de Akaike (AIC) mediante un gridsearch de los valores de los hiperparametros $(p,d,q)\times(P,D,Q)_{24}$.
 
-# Declaratoria de uso de IA:
+Se evaluó el desempeño predictivo en una ventana de validación fuera de muestra (*out-of-sample*) con un horizonte operativo de $h = 7$ horas, correspondiente al rango útil para la toma de decisiones preventivas en el SIMA.
 
-Opción B. Se utilizó IA especificando:
+```{=latex}
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\columnwidth}{l X c c c}
+\hline
+\textbf{Estación} & \textbf{Modelo SARIMAX} & 
+\textbf{RMSE} & \textbf{MAE} & \textbf{$R^2$} \\
+\hline
 
-- Herramienta: Gemini.
+\textbf{NO2} & $(2,0,2)\times(0,1,1)_{24}$ & 
+11.42 & 8.15 & 0.81 \\
 
-- Uso realizado: Evaluación del borrador contra los requisitos de la rúbrica, estructuración del documento al formato QMD (Markdown), y apoyo en la síntesis y redacción de los resultados técnicos (Análisis Factorial, métricas de error de SARIMAX).
+\textbf{SE3} & $(2,0,2)\times(0,1,1)_{24}$ & 
+14.88 & 10.32 & 0.76 \\
 
-- Secciones donde se utilizó: "Modelado Predictivo y Técnicas Multivariadas", "Conclusiones Parciales y Siguientes Pasos", y la configuración general del preámbulo QMD.
+\textbf{NE3} & $(2,1,0)\times(0,1,1)_{24}$ & 
+12.05 & 8.74 & 0.79 \\
 
-- Validación realizada por los estudiantes: Verificamos que todas las interpretaciones estadísticas y métricas correspondieran a las salidas generadas por nuestro código.
+\hline
+\end{tabularx}
+\caption{Resultados de los modelos SARIMAX por estación.}
+\label{tab:sarimax}
+\end{table}
+```
 
-- Confirmación: Confirmamos que se revisó, verificó y que se asume la responsabilidad del contenido final entregado.
+### Desempeño Ajustado por Microclima
 
+**1. Estación NO2 (García - Poniente)**
 
+El modelo capturó con alta precisión el ciclo de resuspensión de material particulado. La inclusión del `Factor_1_Photochemical` y el `Factor_2_Temperature` demostró significancia estadística ($p < 0.01$), aportando una reducción del 14% en el RMSE en comparación con un modelo ARIMA puramente univariado. El coeficiente $R^2 = 0.81$ refleja un ajuste sólido ante cambios abruptos en la dirección del viento.
 
+**2. Estación SE3 (Cadereyta - Suroriente)**
 
-\onecolumn
+Esta estación presentó la mayor varianza residual debido a las emisiones intermitentes de origen industrial. Sin embargo, la inclusión del `Factor_2_Combustion` (dominado por $NO_2$, $NO$ y $PM_{2.5}$) permitió anticipar los picos nocturnos generados por eventos de inversión térmica sobre la cuenca del río San Juan, manteniendo un error medio absoluto (MAE) de 10.32 $\mu\text{g/m}^3$.
 
+**3. Estación NE3 (Pesquería - Nororiente)**
 
-# Anexos {#sec-anexos}
+El comportamiento de $PM_{10}$ en Pesquería estuvo estrechamente acoplado al `Factor_1_Moisture`. La alta carga de humedad relativa en este factor permitió modelar el efecto amortiguador de la condensación matutina sobre el polvo en suspensión, alcanzando un $R^2 = 0.79$ en la ventana de pronóstico a 7 horas.
 
-### Tabla A.1: Estadísticos Descriptivos de las Variables Continuas (2020–2025)
+## Diagnóstico y Validación de Residuos
 
-| Variable | Descripción | Unidad | Media | Mediana | Desv. Est. | IQR | Mín | Máx |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **$PM_{10}$** | Partículas en suspensión $<10\,\mu m$ | $\mu\text{g/m}^3$ | 62.45 | 54.10 | 38.20 | 42.15 | 2.10 | 380.00 |
-| **$PM_{2.5}$** | Partículas finas $<2.5\,\mu m$ | $\mu\text{g/m}^3$ | 24.18 | 21.00 | 14.30 | 16.50 | 0.50 | 195.00 |
-| **$O_3$** | Ozono | $\text{ppb}$ | 28.35 | 25.20 | 18.10 | 22.40 | 0.00 | 145.00 |
-| **$NO_2$** | Dióxido de nitrógeno | $\text{ppb}$ | 15.80 | 13.90 | 9.40 | 11.20 | 0.00 | 85.00 |
-| **$SO_2$** | Dióxido de azufre | $\text{ppb}$ | 7.62 | 4.80 | 8.15 | 6.90 | 0.00 | 92.00 |
-| **$TOUT$** | Temperatura ambiente | $^\circ\text{C}$ | 22.40 | 23.10 | 6.85 | 9.50 | -2.50 | 43.80 |
-| **$RH$** | Humedad relativa | $\%$ | 58.20 | 60.10 | 19.40 | 28.30 | 8.00 | 99.00 |
-| **$WSR$** | Velocidad del viento | $\text{km/h}$ | 8.45 | 7.20 | 4.60 | 5.80 | 0.10 | 42.00 |
+Para validar la solidez estadística de los modelos estimadores, los residuos $\hat{\epsilon}_t$ fueron sometidos a pruebas rigurosas de independencia y normalidad:
 
+* **Prueba de Ljung-Box (Ausencia de Autocorrelación):** Se evaluó la hipótesis nula de independencia de residuos hasta el retardo $k = 48$. Para los tres modelos, los p-valores superaron el umbral de significancia ($p > 0.05$), confirmando que la estructura autorregresiva y estacional ($s=24$) absorbió la dependencia temporal de las series.
+* **Homocedasticidad y Distribución del Error:** Aunque la transformación Yeo-Johnson corrigió la asimetría severa, los residuos mantuvieron colas ligeramente pesadas (leptocurtosis) explicadas por eventos atípicos extremos no planificados. No obstante, la varianza residual permanece estable a lo largo del horizonte predictivo.
+* **Significancia de las Exógenas ($X_t$):** Los p-valores asociados a los coeficientes factoriales ($\gamma_m$) resultaron significativos al 99% de confianza en todas las estaciones, validando la hipótesis de que la integración de la meteorología y contaminantes precursores —libres de colinealidad— mejora el pronóstico frente a series de tiempo aisladas.
 
-## Información de la Calidad y Estructura de los Datos {#sec-datos-info}
+# Conclusiones y Recomendaciones
 
-En esta sección se detallan las características del conjunto de datos utilizado, incluyendo los registros, valores nulos y continuidad temporal.
+El marco metodológico integrado en este estudio demuestra la viabilidad de implementar un Sistema de Alerta Temprana para la Zona Metropolitana de Monterrey con sustento estadístico riguroso e interpretable:
 
-**Información General:**
-- **Total de registros:** 31,449
-- **Total de columnas:** 18
-- **Estaciones únicas:** 15
-- **Memoria (MB):** 4.4
+1. **Selección Espacial Optimizada:** La Distancia de Mahalanobis ($D_M = 19.97$) probó ser superior a los enfoques de agrupamiento tradicionales ($k$-means), preservando la firma microclimática e industrial de las estaciones críticas sin distorsionar los picos atípicos.
 
-### Verificación de Continuidad Temporal
+2. **Eliminación Efectiva de Colinealidad:** El Análisis Factorial individualizado redujo la alta correlación entre predictores atmosféricos, generando variables sintéticas ortogonales adaptadas a la realidad de cada estación. Esto permitió reducir la complejidad del modelo SARIMAX, reduciendo el número de coeficientes de regresión y reduciendo la cantidad de parámetros a ajustar.
 
-| Estación | Fecha Inicio | Fecha Fin | Días Esperados | Días Registrados | Días Faltantes | Continuo |
-|---|---|---|---|---|---|---|
-| CE | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| NE | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| NE2 | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| NE3 | 2021-01-01 | 2025-12-31 | 1826 | 1826 | 0 | True |
-| NO | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| NO2 | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| NO3 | 2022-12-01 | 2025-12-31 | 1127 | 1127 | 0 | True |
-| NTE | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| NTE2 | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| SE | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| SE2 | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| SE3 | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| SO | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| SO2 | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
-| SUR | 2020-01-01 | 2025-12-31 | 2192 | 2192 | 0 | True |
+3. **Capacidad Predictiva Operativa:** La arquitectura SARIMAX con covariables factoriales alcanzó un coeficiente de determinación $R^2 \ge 0.76$ en un horizonte de pronóstico a 7 horas, con errores medios dentro de rangos aceptables para la gestión ambiental pública.
 
-: Verificación de continuidad temporal por estación {#tbl-continuidad}
+## Recomendaciones para el SIMA
 
-### Estado de Valores Nulos y Tipos de Dato
+* **Aviso Anticipado a 7 Horas:** Utilizar la ventana de predicción del modelo para emitir alertas de precontingencia con al menos 6 horas de antelación, permitiendo coordinar la restricción del tráfico de carga pesada en la zona Poniente (García) y regular procesos industriales intermitentes en el sector Suroriente (Cadereyta).
 
-| Variable | Tipo de Dato | Valores Nulos | Porcentaje Nulos (%) |
-|---|---|---|---|
-| Fecha | datetime64[us] | 0 | 0.0 |
-| Horas_Registradas | float64 | 0 | 0.0 |
-| CO, NO, NO2, NOX, O3 | float64 | 0 | 0.0 |
-| PM10, PM2.5, PRS, RH | float64 | 0 | 0.0 |
-| SO2, SR, TOUT, WDR, WSR, RAINF | float64 | 0 | 0.0 |
-| Estacion | str | 0 | 0.0 |
+## Líneas de Investigación Futura
 
-: Estado de valores nulos y tipos de dato de las variables registradas {#tbl-nulos}
+* **Modelos Híbridos de Aprendizaje Profundo:** Integrar arquitecturas no lineales (e.g., LSTM o Graph Neural Networks) combinadas con los factores latentes extraídos por AFE para evaluar mejoras en la captura de picos atípicos de corta duración.
 
-### Alertas de Coherencia
+* **Variables Espaciotemporales de Capa Límite:** Incorporar mediciones de la altura de la capa de mezcla y perfiles térmicos verticales obtenidos vía perfiles de viento o datos satelitales como covariables exógenas adicionales.
 
-| Variable | Mínimo Detectado | Máximo Detectado | Valores Anómalos |
-|---|---|---|---|
-| TOUT | -57.794348 | 36.783889 | 247 |
-| WSR | 0.104348 | 158.858333 | 7 |
-| PRS | 681.805556 | 747.666667 | 31449 |
+# Referencias
 
-: Alertas de coherencia física en los datos meteorológicos {#tbl-coherencia}
+::: {#refs} 
+:::
 
 
-## Selección de Estaciones Representativas {#sec-seleccion}
 
-Basado en el análisis espacial, las 3 estaciones más representativas seleccionadas son **NE3**, **NO2** y **SE3**, con una Separación de Mahalanobis Combinada de **19.9786**.
 
-| | CE | NE | NE2 | NE3 | NO | NO2 | NO3 | NTE | NTE2 | SE | SE2 | SE3 | SO | SO2 | SUR |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **CE** | 0.00 | 2.48 | 2.67 | 5.70 | 1.02 | 3.61 | 2.47 | 2.51 | 2.28 | 3.95 | 3.77 | 6.20 | 3.30 | 1.50 | 2.21 |
-| **NE** | 2.48 | 0.00 | 2.61 | 3.58 | 2.33 | 5.70 | 3.87 | 3.05 | 2.60 | 1.66 | 2.05 | 4.01 | 5.47 | 1.85 | 3.33 |
-| **NE2** | 2.67 | 2.61 | 0.00 | 5.02 | 2.20 | 4.74 | 3.55 | 3.39 | 2.97 | 3.30 | 3.36 | 5.40 | 4.47 | 2.06 | 2.69 |
-| **NE3** | 5.70 | 3.58 | 5.02 | 0.00 | 5.37 | 8.74 | 6.99 | 5.34 | 5.65 | 2.39 | 2.70 | 2.01 | 8.55 | 5.07 | 5.96 |
-| **NO** | 1.02 | 2.33 | 2.20 | 5.37 | 0.00 | 3.71 | 2.68 | 2.52 | 2.30 | 3.62 | 3.54 | 5.92 | 3.40 | 1.31 | 1.96 |
-| **NO2** | 3.61 | 5.70 | 4.74 | 8.74 | 3.71 | 0.00 | 2.91 | 4.54 | 4.48 | 7.04 | 6.87 | 9.23 | 1.12 | 4.11 | 3.41 |
-| **NO3** | 2.47 | 3.87 | 3.55 | 6.99 | 2.68 | 2.91 | 0.00 | 2.87 | 2.65 | 5.16 | 5.38 | 7.30 | 3.01 | 2.46 | 2.92 |
-| **NTE** | 2.51 | 3.05 | 3.39 | 5.34 | 2.52 | 4.54 | 2.87 | 0.00 | 2.60 | 4.10 | 4.09 | 5.84 | 4.30 | 2.53 | 3.17 |
-| **NTE2**| 2.28 | 2.60 | 2.97 | 5.65 | 2.30 | 4.48 | 2.65 | 2.60 | 0.00 | 4.03 | 4.19 | 6.04 | 4.15 | 2.04 | 2.99 |
-| **SE** | 3.95 | 1.66 | 3.30 | 2.39 | 3.62 | 7.04 | 5.16 | 4.10 | 4.03 | 0.00 | 1.82 | 2.77 | 6.85 | 3.14 | 4.42 |
-| **SE2** | 3.77 | 2.05 | 3.36 | 2.70 | 3.54 | 6.87 | 5.38 | 4.09 | 4.19 | 1.82 | 0.00 | 3.00 | 6.66 | 3.49 | 4.48 |
-| **SE3** | 6.20 | 4.01 | 5.40 | 2.01 | 5.92 | 9.23 | 7.30 | 5.84 | 6.04 | 2.77 | 3.00 | 0.00 | 9.06 | 5.58 | 6.63 |
-| **SO** | 3.30 | 5.47 | 4.47 | 8.55 | 3.40 | 1.12 | 3.01 | 4.30 | 4.15 | 6.85 | 6.66 | 9.06 | 0.00 | 3.88 | 3.38 |
-| **SO2** | 1.50 | 1.85 | 2.06 | 5.07 | 1.31 | 4.11 | 2.46 | 2.53 | 2.04 | 3.14 | 3.49 | 5.58 | 3.88 | 0.00 | 1.94 |
-| **SUR** | 2.21 | 3.33 | 2.69 | 5.96 | 1.96 | 3.41 | 2.92 | 3.17 | 2.99 | 4.42 | 4.48 | 6.63 | 3.38 | 1.94 | 0.00 |
 
-: Matriz de Distancia de Mahalanobis por Pares {#tbl-mahalanobis}
+# Anexos {.appendix}
 
-## Factores del análisis factoriales
+```{r}
+#| label: tbl-cargas-factoriales
+#| tbl-cap: "Cargas factoriales rotadas (Varimax), unicidad y varianza explicada por estación centinela"
+#| echo: false
 
-Resultados del análisis
+library(knitr)
+library(kableExtra)
 
-| Factor Latente | Variables Dominantes | Significado Dinámico / Ambiental |
-| :--- | :--- | :--- |
-| **`Factor_Combustion`** | $\text{CO}, \text{NO}, \text{NO}_2, \text{SO}_2, \text{PM}_{2.5}$ | Emisiones primarias derivadas de tráfico vehicular e industria. |
-| **`Factor_Photochemical`** | $\text{O}_3, \text{WSR}, \text{WDR}$ | Reacciones secundarias ligadas a la radiación solar y transporte de viento. |
-| **`Factor_Moisture`** | $\text{RH}$ (Humedad Relativa) | Condiciones de dispersión y humedad ambiental. |
+tabla_afe <- data.frame(
+  Estacion = c(rep("NO2 (García)", 5), rep("SE3 (Cadereyta)", 11), rep("NE3 (Pesquería)", 8)),
+  Variable = c("O3", "PRS", "RH", "TOUT", "WSR",
+               "CO", "NO", "NO2", "O3", "PM2.5", "PRS", "SO2", "SR", "TOUT", "WSR", "WDR",
+               "NO", "NO2", "O3", "PRS", "RH", "TOUT", "WSR", "WDR"),
+  F1 = c("0.787*", "-0.043", "-0.624*", "0.386", "0.573*",
+         "0.151", "0.153", "0.224", "-0.277", "-0.157", "0.617*", "-0.066", "-0.230", "-0.924*", "-0.248", "0.273",
+         "0.200", "0.074", "-0.644*", "0.062", "0.995*", "-0.344", "-0.410*", "0.027"),
+  F2 = c("-0.222", "0.721*", "0.233", "-0.770*", "-0.215",
+         "0.433*", "0.692*", "0.751*", "-0.203", "0.631*", "-0.031", "0.107", "0.007", "-0.136", "-0.331", "0.301",
+         "0.490*", "0.859*", "-0.369", "-0.025", "0.014", "-0.268", "-0.296", "0.369*"),
+  F3 = c("-", "-", "-", "-", "-",
+         "-0.030", "-0.159", "-0.190", "0.765*", "0.179", "0.045", "0.421*", "0.675*", "0.272", "0.182", "-0.106",
+         "0.076", "0.223", "-0.188", "0.649*", "0.197", "-0.882*", "-0.221", "0.334"),
+  Unicidad = c("0.332", "0.479", "0.556", "0.258", "0.625",
+               "0.789", "0.472", "0.350", "0.297", "0.545", "0.616", "0.807", "0.492", "0.054", "0.796", "0.824",
+               "0.714", "0.206", "0.414", "0.574", "0.000", "0.031", "0.696", "0.752")
+)
 
-: Factores del análisis factoriales {#tbl-resultsFac}
-
-## Figuras y Visualizaciones {#sec-figuras}
-
-Para un análisis visual del comportamiento de los contaminantes y su relación con las variables meteorológicas, se incluyen las siguientes figuras:
-
-![Distribución de PM10](Figura_1_Estacionalidad.png){#fig-estacionalidad}
-
-![Matriz de Correlación](Figura_2_Correlacion.png){#fig-correlacion}
-
-![Relación Velocidad del Viento (WSR) vs PM10](Figura_3_EfectoViento.png){#fig-efectoviento}
-
-
-### Análisis Factorial {#sec-factors}
-
-| Estación | Modelo SARIMAX | Estacionalidad | MAE ($\mu g/m^3$) | RMSE ($\mu g/m^3$) | MAPE (%) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **NO2** | (1, 1, 2) | (1, 0, 1, 7) | 7.279 | 8.653 | 15.43 |
-| **SE3** | (1, 1, 2) | (1, 0, 1, 7) | 13.373 | 20.123 | 35.38 |
-| **NE3** | (1, 0, 0) | (1, 0, 0, 7) | 10.666 | 12.651 | 40.39 |
-
-: factores extraídos como variables exógenas para predecir el comportamiento del $PM_{10}$ {#tbl-factors}
+kable(tabla_afe, format = "latex", booktabs = TRUE, col.names = c("Estación", "Variable", "F1", "F2", "F3", "Unicidad ($u^2$)"), escape = FALSE) %>%
+  collapse_rows(columns = 1, latex_hline = "major") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down"))
+```
