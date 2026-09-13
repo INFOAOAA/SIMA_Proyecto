@@ -1,4 +1,5 @@
 ---
+lang: es
 format:
   pdf:
     pdf-engine: pdflatex
@@ -31,7 +32,13 @@ format:
           \newcommand{\campus}{Campus Monterrey}
           \newcommand{\fecha}{\today}
       - preamble.tex
-    include-before-body: titlepage.tex
+    include-before-body:
+      - text: |
+          \renewcommand{\figurename}{Figura}
+          \renewcommand{\tablename}{Tabla}
+          \renewcommand{\listfigurename}{Índice de figuras}
+          \renewcommand{\listtablename}{Índice de tablas}
+      - titlepage.tex
 ---
 
 # Resumen
@@ -159,6 +166,8 @@ Debido a la alta variabilidad eólica del cañón de la Huasteca, los gases de c
 
 * **`Factor_2_Temperature` ($\lambda = 0.60$):** Dominado por la temperatura $TOUT$ (-0.770) y la presión barométrica $PRS$ (0.721), representando la dinámica micrometeorológica local.
 
+El *scree plot* y el diagrama de cargas rotadas de esta estación se muestran en el Anexo (@fig-scree-no2 y @fig-diagram-no2).
+
 **2. Estación SE3 (Cadereyta - Suroriente)**
 
 Dada la fuerte influencia persistente de la refinería e industria pesada, se retuvieron 11 variables sintéticas distribuidas en 3 factores latentes ($KMO = 0.7120$):
@@ -170,6 +179,8 @@ Dada la fuerte influencia persistente de la refinería e industria pesada, se re
 * **`Factor_3_Photochemical` ($\lambda = 0.72$):** 
 Sintetiza la interacción entre la radiación solar $SR$ (0.675), $O_3$ (0.765) y precursores de azufre $SO_2$ (0.421).
 
+El *scree plot* y el diagrama de cargas rotadas de esta estación se muestran en el Anexo (@fig-scree-se3 y @fig-diagram-se3).
+
 **3. Estación NE3 (Pesquería - Nororiente)**
 
 En el corredor industrial-urbano de reciente expansión se retuvieron 8 variables organizadas en 3 factores latentes ($KMO = 0.7065$):
@@ -179,6 +190,8 @@ En el corredor industrial-urbano de reciente expansión se retuvieron 8 variable
 * **`Factor_2_Combustion` ($\lambda = 0.94$):** Refleja la actividad del transporte de carga e industria pesada ($NO_2$: 0.859, $NO$: 0.490, $WDR$: 0.369).
 
 * **`Factor_3_Temperature` ($\lambda = 0.72$):** Sintetiza las fluctuaciones de temperatura $TOUT$ (-0.882) y presión $PRS$ (0.649).
+
+El *scree plot* y el diagrama de cargas rotadas de esta estación se muestran en el Anexo (@fig-scree-ne3 y @fig-diagram-ne3).
 
 ### Puntuaciones Factoriales (*Factor Scores*)
 
@@ -224,6 +237,8 @@ donde:
 
 ## Selección de Ordenes y Evaluación por Estación
 
+Con el objetivo de optimizar el tiempo computacional y evitar la exploración exhaustiva del ajuste del modelo SARIMAX en las 15 estaciones de la red, la estrategia de selección se basó en el análisis de agregación diaria de los datos. A partir de este filtrado a nivel diario, se identificaron los patrones extremos y se ejecutó la búsqueda de parámetros sobre las tres estaciones pivote seleccionadas, acotando el espacio de iteración del modelo sin comprometer la captura de la dinámica ambiental.
+
 La identificación de los órdenes $(p,d,q)\times(P,D,Q)_{24}$ se fundamentó en la inspección de las funciones de autocorrelación (ACF) y autocorrelación parcial (PACF) sobre las series diferenciadas, optimizada posteriormente mediante la minimización del Criterio de Información de Akaike (AIC) mediante un gridsearch de los valores de los hiperparametros $(p,d,q)\times(P,D,Q)_{24}$.
 
 Se evaluó el desempeño predictivo en una ventana de validación fuera de muestra (*out-of-sample*) con un horizonte operativo de $h = 7$ horas, correspondiente al rango útil para la toma de decisiones preventivas en el SIMA.
@@ -254,6 +269,8 @@ Se evaluó el desempeño predictivo en una ventana de validación fuera de muest
 \end{table}
 ```
 
+La comparativa gráfica de las métricas de error para las tres estaciones se presenta en el Anexo (@fig-metricas-holdout).
+
 ### Desempeño Ajustado por Microclima
 
 **1. Estación NO2 (García - Poniente)**
@@ -268,9 +285,13 @@ El modelo capturó con alta precisión el ciclo de resuspensión de material par
 
 Esta estación presentó la mayor varianza residual debido a las emisiones intermitentes de origen industrial. Sin embargo, la inclusión del `Factor_2_Combustion` (dominado por $NO_2$, $NO$ y $PM_{2.5}$) permitió anticipar los picos nocturnos generados por eventos de inversión térmica sobre la cuenca del río San Juan, manteniendo un error medio absoluto (MAE) de 10.32 $\mu\text{g/m}^3$.
 
+El pronóstico horario fuera de muestra y su diagnóstico de residuos se presentan en el Anexo (@fig-regresion-se3 y @fig-residuales-se3).
+
 **3. Estación NE3 (Pesquería - Nororiente)**
 
 El comportamiento de $PM_{10}$ en Pesquería estuvo estrechamente acoplado al `Factor_1_Moisture`. La alta carga de humedad relativa en este factor permitió modelar el efecto amortiguador de la condensación matutina sobre el polvo en suspensión, alcanzando un $R^2 = 0.79$ en la ventana de pronóstico a 7 horas.
+
+El pronóstico horario fuera de muestra y su diagnóstico de residuos se presentan en el Anexo (@fig-regresion-ne3 y @fig-residuales-ne3).
 
 ## Diagnóstico y Validación de Residuos
 
@@ -288,13 +309,23 @@ El marco metodológico integrado en este estudio demuestra la viabilidad de impl
 
 1. **Selección Espacial Optimizada:** La Distancia de Mahalanobis ($D_M = 19.97$) probó ser superior a los enfoques de agrupamiento tradicionales ($k$-means), preservando la firma microclimática e industrial de las estaciones críticas sin distorsionar los picos atípicos.
 
-2. **Eliminación Efectiva de Colinealidad:** El Análisis Factorial individualizado redujo la alta correlación entre predictores atmosféricos, generando variables sintéticas ortogonales adaptadas a la realidad de cada estación. Esto permitió reducir la complejidad del modelo SARIMAX, reduciendo el número de coeficientes de regresión y reduciendo la cantidad de parámetros a ajustar.
+2. **Eliminación Efectiva de Colinealidad:** El Análisis Factorial individualizado redujo la alta correlación entre predictores atmosféricos, generando variables sintéticas ortogonales adaptadas a la realidad de cada estación. Esto permitió reducir la complejidad del modelo SARIMAX, reduciendo el número de coeficientes de regresión y asimismo la cantidad de parámetros a ajustar.
 
 3. **Capacidad Predictiva Operativa:** La arquitectura SARIMAX con covariables factoriales alcanzó un coeficiente de determinación $R^2 \ge 0.76$ en un horizonte de pronóstico a 7 horas, con errores medios dentro de rangos aceptables para la gestión ambiental pública.
+
+Dados los resultados obtenidos y las predicciones con comportamientos marcadamente disímiles entre sí —los cuales justifican la selección preliminar de estaciones con mayor distancia de Mahalanobis—, es posible inferir que las demás estaciones no tratadas en este reporte presentan comportamientos combinados de estos tres nodos representativos. Bajo esta premisa, la predicción de $PM_{10}$ en toda la red SIMA podría quedar acotada por estos tres modelos pivote, favoreciendo la generalización del fenómeno y optimizando la eficiencia computacional de los pronósticos.  Conceptualmente, esto permitiría estructurar un perfil de estimación espacial donde el comportamiento de cualquier estación $n$ diferente de las tres analizadas se modele como una combinación lineal de las series de tiempo centinela:
+
+$$\text{S}_n(t) = \alpha \cdot \text{NO2}(t) + \beta \cdot \text{SE3}(t) + \gamma \cdot \text{NE3}(t)$$
+
+(donde $\alpha, \beta, \gamma \ge 0$ representan los pesos de influencia espacial u orográfica).
+
+Sin embargo, dado el alcance de este trabajo, el desarrollo y validación de esta formulación se deja planteado como una línea de investigación posterior para profundizar en la dinámica atmosférica de la cuenca.  
 
 ## Recomendaciones para el SIMA
 
 * **Aviso Anticipado a 7 Horas:** Utilizar la ventana de predicción del modelo para emitir alertas de precontingencia con al menos 6 horas de antelación, permitiendo coordinar la restricción del tráfico de carga pesada en la zona Poniente (García) y regular procesos industriales intermitentes en el sector Suroriente (Cadereyta).
+
+* **Hiperparametrización correcta:** Manejar una mejor búsqueda de hiperparámetros apropiados que puedan explicar mejor la variabilidad de PM10
 
 ## Líneas de Investigación Futura
 
@@ -374,3 +405,9 @@ kable(tabla_afe, format = "latex", booktabs = TRUE, col.names = c("Estación", "
 ## Métricas Comparativas de los Modelos
 
 ![Comparativa de métricas de error (MAE, RMSE y MAPE) obtenidas en la ventana de validación fuera de muestra (7 horas) para las tres estaciones.](metricas_holdout.png){#fig-metricas-holdout width=90% fig-align="center"}
+
+## Repositorio del Proyecto
+
+El código fuente de los scripts de limpieza de datos, análisis exploratorio, selección por Mahalanobis, análisis factorial y modelación SARIMAX, así como las figuras y recursos del proyecto, está disponible en el repositorio público:
+
+<https://github.com/INFOAOAA/SIMA_Proyecto>
