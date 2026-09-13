@@ -341,6 +341,9 @@ Sin embargo, dado el alcance de este trabajo, el desarrollo y validación de est
 
 
 
+\FloatBarrier
+\clearpage
+\onecolumn % Pasa a 1 columna completa para que los Anexos respiren y no colapsen
 
 # Anexos {.appendix}
 
@@ -376,38 +379,51 @@ kable(tabla_afe, format = "latex", booktabs = TRUE, col.names = c("Estación", "
   kable_styling(latex_options = c("striped", "hold_position", "scale_down"))
 ```
 
-## Pronósticos Fuera de Muestra (SE3 y NE3)
+\vspace{1em}
+Pronósticos Fuera de Muestra (SE3 y NE3)
 
-![Pronóstico horario fuera de muestra (horizonte de 7 horas) vs valores reales de $PM_{10}$ en SE3 (Cadereyta).](../texts/regresion_SE3.png){#fig-regresion-se3 width=90% fig-align="center"}
+![Pronóstico horario fuera de muestra (horizonte de 7 horas) vs valores reales de $PM_{10}$ en SE3 (Cadereyta).](../texts/regresion_SE3.png){#fig-regresion-se3 width=75% fig-align="center"}
 
-![Pronóstico horario fuera de muestra (horizonte de 7 horas) vs valores reales de $PM_{10}$ en NE3 (Pesquería).](../texts/regresion_NE3.png){#fig-regresion-ne3 width=90% fig-align="center"}
+![Pronóstico horario fuera de muestra (horizonte de 7 horas) vs valores reales de $PM_{10}$ en NE3 (Pesquería).](../texts/regresion_NE3.png){#fig-regresion-ne3 width=75% fig-align="center"}
 
-## Diagnóstico de Residuos del Modelo (SE3 y NE3)
+\FloatBarrier
+\clearpage
+Diagnóstico de Residuos del Modelo (SE3 y NE3)
 
-![Residuos del modelo SARIMAX de la estación SE3 (Cadereyta): serie temporal, histograma vs normal, Q-Q, ACF, PACF y residuos vs valores ajustados.](../texts/residuales_SE3.png){#fig-residuales-se3 width=90% fig-align="center"}
+![Residuos del modelo SARIMAX de la estación SE3 (Cadereyta): serie temporal, histograma vs normal, Q-Q, ACF, PACF y residuos vs valores ajustados.](../texts/residuales_SE3.png){#fig-residuales-se3 width=80% fig-align="center"}
 
-![Residuos del modelo SARIMAX de la estación NE3 (Pesquería): serie temporal, histograma vs normal, Q-Q, ACF, PACF y residuos vs valores ajustados.](../texts/residuales_NE3.png){#fig-residuales-ne3 width=90% fig-align="center"}
+![Residuos del modelo SARIMAX de la estación NE3 (Pesquería): serie temporal, histograma vs normal, Q-Q, ACF, PACF y residuos vs valores ajustados.](../texts/residuales_NE3.png){#fig-residuales-ne3 width=80% fig-align="center"}
 
-## Análisis Factorial Exploratorio por Estación
+\FloatBarrier
+\clearpage
+Análisis Factorial Exploratorio por Estación
 
-![Scree plot de la estación NO2 (García) con el criterio de Kaiser ($\lambda = 1$) y el número de factores retenidos.](../texts/factor_analysis_NO2_scree.png){#fig-scree-no2 width=85% fig-align="center"}
+::: {layout-ncol=2}
+![Scree plot de la estación NO2 (García) con el criterio de Kaiser ($\lambda = 1$) y el número de factores retenidos.](../texts/factor_analysis_NO2_scree.png){#fig-scree-no2 width=100%}
 
-![Scree plot de la estación SE3 (Cadereyta) con el criterio de Kaiser ($\lambda = 1$) y el número de factores retenidos.](../texts/factor_analysis_SE3_scree.png){#fig-scree-se3 width=85% fig-align="center"}
+![Scree plot de la estación SE3 (Cadereyta) con el criterio de Kaiser ($\lambda = 1$) y el número de factores retenidos.](../texts/factor_analysis_SE3_scree.png){#fig-scree-se3 width=100%}
+:::
 
-![Scree plot de la estación NE3 (Pesquería) con el criterio de Kaiser ($\lambda = 1$) y el número de factores retenidos.](../texts/factor_analysis_NE3_scree.png){#fig-scree-ne3 width=85% fig-align="center"}
+![Scree plot de la estación NE3 (Pesquería) con el criterio de Kaiser ($\lambda = 1$) y el número de factores retenidos.](../texts/factor_analysis_NE3_scree.png){#fig-scree-ne3 width=50% fig-align="center"}
 
-![Diagrama de cargas factoriales de la estación NO2 (García). El grosor de la flecha es proporcional a la carga y el color rojo indica carga negativa.](../texts/factor_analysis_NO2_diagram.png){#fig-diagram-no2 width=90% fig-align="center"}
+\vspace{1em}
 
-![Diagrama de cargas factoriales de la estación SE3 (Cadereyta). El grosor de la flecha es proporcional a la carga y el color rojo indica carga negativa.](../texts/factor_analysis_SE3_diagram.png){#fig-diagram-se3 width=90% fig-align="center"}
+![Diagrama de cargas factoriales de la estación NO2 (García). El grosor de la flecha es proporcional a la carga y el color rojo indica carga negativa.](../texts/factor_analysis_NO2_diagram.png){#fig-diagram-no2 width=75% fig-align="center"}
 
-![Diagrama de cargas factoriales de la estación NE3 (Pesquería). El grosor de la flecha es proporcional a la carga y el color rojo indica carga negativa.](../texts/factor_analysis_NE3_diagram.png){#fig-diagram-ne3 width=90% fig-align="center"}
+![Diagrama de cargas factoriales de la estación SE3 (Cadereyta). El grosor de la flecha es proporcional a la carga y el color rojo indica carga negativa.](../texts/factor_analysis_SE3_diagram.png){#fig-diagram-se3 width=75% fig-align="center"}
 
-## Métricas Comparativas de los Modelos
+![Diagrama de cargas factoriales de la estación NE3 (Pesquería). El grosor de la flecha es proporcional a la carga y el color rojo indica carga negativa.](../texts/factor_analysis_NE3_diagram.png){#fig-diagram-ne3 width=75% fig-align="center"}
 
-![Comparativa de métricas de error (MAE, RMSE y MAPE) obtenidas en la ventana de validación fuera de muestra (7 horas) para las tres estaciones.](metricas_holdout.png){#fig-metricas-holdout width=90% fig-align="center"}
+\FloatBarrier
+\clearpage
+Métricas Comparativas de los Modelos
 
-## Repositorio del Proyecto
+![Comparativa de métricas de error (MAE, RMSE y MAPE) obtenidas en la ventana de validación fuera de muestra (7 horas) para las tres estaciones.](metricas_holdout.png){#fig-metricas-holdout width=75% fig-align="center"}
+
+\vspace{1em}
+
+**Repositorio del Proyecto**
 
 El código fuente de los scripts de limpieza de datos, análisis exploratorio, selección por Mahalanobis, análisis factorial y modelación SARIMAX, así como las figuras y recursos del proyecto, está disponible en el repositorio público:
 
-<https://github.com/INFOAOAA/SIMA_Proyecto>
+https://github.com/INFOAOAA/SIMA_Proyecto
