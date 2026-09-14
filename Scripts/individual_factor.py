@@ -1,7 +1,10 @@
+# quita nombre
 import os
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from factor_analyzer import calculate_kmo
@@ -45,7 +48,9 @@ def select_kmo_vars(
 
     while True:
         kmo_per, kmo_model = calculate_kmo(current)
-        series = pd.Series(kmo_per, index=current.columns, name="KMO_Score").sort_values()
+        series = pd.Series(
+            kmo_per, index=current.columns, name="KMO_Score"
+        ).sort_values()
         history.append((kmo_model, series.copy()))
 
         low = series[series < threshold]
@@ -110,14 +115,14 @@ def describe_factors(loadings: pd.DataFrame, labels: dict[str, str]) -> list[str
     desc = []
     for col in loadings.columns:
         top = loadings[col].abs().sort_values(ascending=False).head(3)
-        top_str = ", ".join(f"{var} ({loadings.loc[var, col]:.3f})" for var in top.index)
+        top_str = ", ".join(
+            f"{var} ({loadings.loc[var, col]:.3f})" for var in top.index
+        )
         desc.append(f"{col} = {labels[col]}: {top_str}")
     return desc
 
 
-def compute_factor_scores(
-    df: pd.DataFrame, res, n_factors: int
-) -> pd.DataFrame:
+def compute_factor_scores(df: pd.DataFrame, res, n_factors: int) -> pd.DataFrame:
     Z = (df - df.mean()) / df.std(ddof=0)
     R_inv = np.linalg.pinv(Z.corr().values)
     L = np.real(res.loadings)
@@ -160,7 +165,9 @@ def save_fa_diagram(
     ax.set_xlim(0, 10)
     ax.set_ylim(-0.5, span + 0.5)
     ax.axis("off")
-    ax.set_title(f"Factor Analysis Diagram - Estación {station}", fontsize=13, fontweight="bold")
+    ax.set_title(
+        f"Factor Analysis Diagram - Estación {station}", fontsize=13, fontweight="bold"
+    )
 
     for i, var in enumerate(loadings.index):
         unq = uniqueness.get(var, float("nan"))
@@ -171,7 +178,9 @@ def save_fa_diagram(
             ha="center",
             va="center",
             fontsize=10,
-            bbox=dict(boxstyle="round,pad=0.35", facecolor="#EFEFEF", edgecolor="#888888"),
+            bbox=dict(
+                boxstyle="round,pad=0.35", facecolor="#EFEFEF", edgecolor="#888888"
+            ),
         )
 
     for j, fac in enumerate(loadings.columns):
@@ -183,7 +192,9 @@ def save_fa_diagram(
             ha="center",
             va="center",
             fontsize=10,
-            bbox=dict(boxstyle="round,pad=0.45", facecolor="#D9EAF7", edgecolor="#4A72A8"),
+            bbox=dict(
+                boxstyle="round,pad=0.45", facecolor="#D9EAF7", edgecolor="#4A72A8"
+            ),
         )
 
     strongest = loadings.abs().idxmax(axis=1)
@@ -198,7 +209,9 @@ def save_fa_diagram(
             "",
             xy=(var_x + 0.6, var_ys[i]),
             xytext=(factor_x - 0.6, fac_ys[j]),
-            arrowprops=dict(arrowstyle="->", color=color, lw=max(0.8, min(3.0, abs(w)))),
+            arrowprops=dict(
+                arrowstyle="->", color=color, lw=max(0.8, min(3.0, abs(w)))
+            ),
         )
         ax.text(
             (var_x + factor_x) / 2,
@@ -223,7 +236,9 @@ def save_scree_plot(evals, n_factors: int, station: str, outpath: str):
     plt.scatter(x, evals, color="red", zorder=3)
     plt.plot(x, evals, color="blue", linestyle="--", zorder=2)
     plt.axhline(y=1, color="grey", linestyle=":", linewidth=1.5, label="Kaiser (λ=1)")
-    plt.axvline(x=n_factors + 0.5, color="green", linestyle="--", label=f"{n_factors} factores")
+    plt.axvline(
+        x=n_factors + 0.5, color="green", linestyle="--", label=f"{n_factors} factores"
+    )
     plt.title(f"Scree Plot - Estación {station}", fontsize=12, fontweight="bold")
     plt.xlabel("Número de Factor")
     plt.ylabel("Eigenvalue")
@@ -235,7 +250,9 @@ def save_scree_plot(evals, n_factors: int, station: str, outpath: str):
     plt.close()
 
 
-def analyze_station(df: pd.DataFrame, station: str, texts_dir: str, parquet_dir: str) -> str:
+def analyze_station(
+    df: pd.DataFrame, station: str, texts_dir: str, parquet_dir: str
+) -> str:
     sep = "=" * 70
     lines = [sep, f" ANÁLISIS FACTORIAL INDIVIDUAL - ESTACIÓN {station}", sep]
 
@@ -250,7 +267,9 @@ def analyze_station(df: pd.DataFrame, station: str, texts_dir: str, parquet_dir:
         lines.append(series.round(4).to_string())
         low = series[series < KMO_THRESHOLD]
         if not low.empty:
-            lines.append(f"  -> Eliminando variable con menor KMO: {low.index[0]} ({low.iloc[0]:.4f})")
+            lines.append(
+                f"  -> Eliminando variable con menor KMO: {low.index[0]} ({low.iloc[0]:.4f})"
+            )
     lines.append(f"\nVariables retenidas: {retained}")
 
     df_fa = df_num[retained]
@@ -354,7 +373,9 @@ def analyze_station(df: pd.DataFrame, station: str, texts_dir: str, parquet_dir:
 
 def main():
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(SCRIPT_DIR, "..", "BasesDeDatosParquet", "hourly_database.parquet")
+    data_path = os.path.join(
+        SCRIPT_DIR, "..", "BasesDeDatosParquet", "hourly_database.parquet"
+    )
     texts_dir = os.path.join(SCRIPT_DIR, "..", "texts")
     os.makedirs(texts_dir, exist_ok=True)
 
