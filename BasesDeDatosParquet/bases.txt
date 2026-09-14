@@ -1,0 +1,3 @@
+Bases de datos
+Porque parquet es más lightweight
+
